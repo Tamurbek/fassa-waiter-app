@@ -92,7 +92,8 @@ class UpdateService {
             ElevatedButton(
               onPressed: () {
                 Get.back();
-                if (Platform.isAndroid && url.contains('.apk')) {
+                // Check if it's an APK file or points to an APK download endpoint
+                if (Platform.isAndroid && (url.contains('.apk') || url.contains('android'))) {
                   _downloadAndInstall(url, version);
                 } else {
                   _launchUpdateUrl(url);
