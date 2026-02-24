@@ -286,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Obx(() {
         final int qty = pos.currentOrder
-            .where((e) => (e['item'] as FoodItem).id == item.id)
+            .where((e) => (e['item'] as FoodItem).id == item.id && e['isNew'] == true)
             .fold(0, (sum, e) => sum + (e['quantity'] as int));
 
         return Stack(
