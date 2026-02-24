@@ -237,19 +237,22 @@ mixin UserAuthMixin on POSControllerState {
     authenticatePin(false);
     
     bool isTerminal = currentTerminal.value != null;
-    bool isWaiterShared = deviceRole.value == "WAITER" && waiterCafeId.value != null;
+    
+    // For personal devices (not in terminal mode), simply lock the current user session
+    if (!isTerminal && currentUser.value != null) {
+      Get.offAll(() => const PinCodeScreen());
+      return;
+    }
 
-    if (isTerminal || isWaiterShared) {
-      // Clear current user but keep terminal/cafe context
-      setCurrentUser(null);
-      pinCode.value = null;
-      storage.remove('pin_code');
+    // In terminal mode or shared waiter mode without a current user, go to selection screen
+    setCurrentUser(null);
+    pinCode.value = null;
+    storage.remove('pin_code');
 
-      if (isTerminal) {
-        Get.offAll(() => const StaffSelectionPage());
-      } else {
-        Get.offAll(() => StaffSelectionPage(cafeId: waiterCafeId.value, isFromTerminal: false));
-      }
+    if (isTerminal) {
+      Get.offAll(() => const StaffSelectionPage());
+    } else if (waiterCafeId.value != null) {
+      Get.offAll(() => StaffSelectionPage(cafeId: waiterCafeId.value, isFromTerminal: false));
     } else {
       Get.offAll(() => const PinCodeScreen());
     }
