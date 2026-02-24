@@ -14,6 +14,7 @@ import 'controller_parts/product_mixin.dart';
 import 'controller_parts/staff_mixin.dart';
 import 'controller_parts/table_mixin.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:vibration/vibration.dart';
 
 class POSController extends POSControllerState with 
     UserAuthMixin, 
@@ -134,9 +135,15 @@ class POSController extends POSControllerState with
       }
     });
 
-    socket.onWaiterCall((data) {
+    socket.onWaiterCall((data) async {
       if (currentUser.value?['id']?.toString() == data['waiter_id'].toString()) {
         _playAlertSound();
+        
+        // Vibrate if supported
+        if (await Vibration.hasVibrator() ?? false) {
+          Vibration.vibrate(duration: 2000, amplitude: 255);
+        }
+
         Get.snackbar("Chaqiruv!", "${data['sender_name']} sizni chaqirmoqda", 
           backgroundColor: Colors.red.withOpacity(0.9), 
           colorText: Colors.white, 
