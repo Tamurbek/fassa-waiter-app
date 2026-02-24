@@ -195,6 +195,7 @@ mixin DataSyncMixin on POSControllerState {
       final String name = i['product'] != null ? i['product']['name'] : (i['name'] ?? "Unknown");
       final int qty = (i['quantity'] ?? i['qty'] ?? 0) as int;
       final double price = double.tryParse((i['price'] ?? 0).toString()) ?? 0.0;
+      final String? itemTime = i['createdAt'] ?? i['created_at'];
 
       if (groupedDetails.containsKey(id)) {
         groupedDetails[id]!['qty'] += qty;
@@ -204,6 +205,7 @@ mixin DataSyncMixin on POSControllerState {
           "name": name,
           "qty": qty,
           "price": price,
+          "timestamp": itemTime ?? timestamp,
         };
       }
     }
