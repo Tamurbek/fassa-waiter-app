@@ -168,6 +168,20 @@ class PrinterService {
       }
       bytes += generator.hr(ch: '-');
 
+      // --- Cancelled Items (if any) ---
+      final cancelledItems = order['cancelled_items'] as List?;
+      if (cancelledItems != null && cancelledItems.isNotEmpty) {
+        bytes += generator.text(_normalizeString('*** ATKAZ QILINGANLAR ***'),
+            styles: const PosStyles(align: PosAlign.center, bold: true));
+        for (var item in cancelledItems) {
+          bytes += generator.row([
+            PosColumn(text: _normalizeString(item['name']), width: 9),
+            PosColumn(text: _normalizeString('-${item['qty']}'), width: 3, styles: const PosStyles(align: PosAlign.right, bold: true)),
+          ]);
+        }
+        bytes += generator.hr(ch: '-');
+      }
+
       // --- Totals ---
       double feeDineInRate = (order['service_fee_dine_in'] ?? 10.0).toDouble();
       double feeTakeaway = (order['service_fee_takeaway'] ?? 0.0).toDouble();

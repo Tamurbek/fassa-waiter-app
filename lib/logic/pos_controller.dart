@@ -213,15 +213,34 @@ class POSController extends POSControllerState with
     
     try {
       final newStatus = isPaid ? "Completed" : "Preparing";
-      Map<dynamic, Map<String, dynamic>> aggregated = {};
+      List<Map<String, dynamic>> consolidatedList = [];
+      List<Map<String, dynamic>> cancelledItems = [];
+
       for (var e in currentOrder) {
         final item = e['item'] as FoodItem;
-        if (aggregated.containsKey(item.id)) { aggregated[item.id]!['qty'] += e['quantity']; } 
-        else {
-          aggregated[item.id] = { "id": item.id, "product_id": item.id, "name": item.name, "qty": e['quantity'], "quantity": e['quantity'], "price": item.price };
+        final int qty = e['quantity'];
+        final int sentQty = e['sentQty'] ?? 0;
+
+        if (qty > 0) {
+          consolidatedList.add({
+            "id": item.id,
+            "product_id": item.id,
+            "name": item.name,
+            "qty": qty,
+            "quantity": qty,
+            "price": item.price,
+          });
+        }
+
+        // track cancellations for receipt display
+        if (qty < sentQty) {
+          cancelledItems.add({
+            "id": item.id,
+            "name": item.name,
+            "qty": sentQty - qty,
+          });
         }
       }
-      final consolidatedList = aggregated.values.toList();
 
       await api.updateOrderStatus(editingOrderId.value!, newStatus);
       await api.updateOrder(editingOrderId.value!, {
@@ -230,14 +249,19 @@ class POSController extends POSControllerState with
       
       int index = allOrders.indexWhere((o) => o['id'].toString() == editingOrderId.value.toString());
       if (index != -1) {
-        allOrders[index]['items'] = totalItems;
-        allOrders[index]['total'] = total;
-        allOrders[index]['status'] = newStatus;
-        allOrders[index]['mode'] = currentMode.value;
-        allOrders[index]['table'] = currentMode.value == "Dine-in" ? selectedTable.value : "-";
-        allOrders[index]['details'] = consolidatedList;
+        final orderToPrint = Map<String, dynamic>.from(allOrders[index]);
+        orderToPrint['items'] = totalItems;
+        orderToPrint['total'] = total;
+        orderToPrint['status'] = newStatus;
+        orderToPrint['mode'] = currentMode.value;
+        orderToPrint['table'] = currentMode.value == "Dine-in" ? selectedTable.value : "-";
+        orderToPrint['details'] = consolidatedList;
+        orderToPrint['cancelled_items'] = cancelledItems; // Pass to printer
         
-        await printOrder(allOrders[index], isKitchenOnly: !isPaid, 
+        // Update allOrders with new details
+        allOrders[index] = orderToPrint;
+
+        await printOrder(orderToPrint, isKitchenOnly: !isPaid, 
           receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
 
         allOrders.refresh();

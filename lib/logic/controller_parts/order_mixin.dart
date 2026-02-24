@@ -8,6 +8,7 @@ mixin OrderMixin on POSControllerState {
   double get subtotal => currentOrder.fold(0, (sum, item) => sum + ((item['item'] as FoodItem).price * (item['quantity'] as int)));
   int get totalItems => currentOrder.fold(0, (sum, item) => sum + (item['quantity'] as int));
   bool get hasNewItems => currentOrder.any((item) => item['isNew'] == true && (item['quantity'] as int) > 0);
+  bool get hasChanges => isOrderModified.value;
 
   double get serviceFee {
     if (currentMode.value == "Dine-in") {
@@ -41,7 +42,16 @@ mixin OrderMixin on POSControllerState {
       if (currentOrder[index]['quantity'] > 1) {
         currentOrder[index]['quantity']--;
       } else {
-        currentOrder.removeAt(index);
+        if (currentOrder[index]['isNew'] == false) {
+          if (isWaiter) {
+            Get.snackbar("Cheklov", "Ofitsiant yuborilgan mahsulotni o'chira olmaydi", 
+              backgroundColor: Colors.orange, colorText: Colors.white);
+            return;
+          }
+          currentOrder[index]['quantity'] = 0;
+        } else {
+          currentOrder.removeAt(index);
+        }
       }
       currentOrder.refresh();
       checkIfModified();
@@ -49,15 +59,13 @@ mixin OrderMixin on POSControllerState {
   }
 
   void removeFromCart(int index) {
-    currentOrder.removeAt(index);
-    currentOrder.refresh();
-    checkIfModified();
-  }
-
-  void updateQuantity(int index, int delta) {
-    int newQty = (currentOrder[index]['quantity'] as int) + delta;
-    if (newQty > 0) {
-      currentOrder[index]['quantity'] = newQty;
+    if (currentOrder[index]['isNew'] == false) {
+      if (isWaiter) {
+        Get.snackbar("Cheklov", "Ofitsiant yuborilgan mahsulotni o'chira olmaydi", 
+          backgroundColor: Colors.orange, colorText: Colors.white);
+        return;
+      }
+      currentOrder[index]['quantity'] = 0;
     } else {
       currentOrder.removeAt(index);
     }
@@ -65,11 +73,48 @@ mixin OrderMixin on POSControllerState {
     checkIfModified();
   }
 
+  void updateQuantity(int index, int delta) {
+    int currentQty = currentOrder[index]['quantity'];
+    int newQty = currentQty + delta;
+    
+    // Waiter restriction: cannot decrease sent items
+    if (isWaiter && currentOrder[index]['isNew'] == false && delta < 0) {
+      Get.snackbar("Cheklov", "Ofitsiant yuborilgan mahsulotni kamaytira olmaydi", 
+        backgroundColor: Colors.orange, colorText: Colors.white);
+      return;
+    }
+
+    if (newQty > 0) {
+      currentOrder[index]['quantity'] = newQty;
+    } else {
+      if (currentOrder[index]['isNew'] == false) {
+        currentOrder[index]['quantity'] = 0;
+      } else {
+        currentOrder.removeAt(index);
+      }
+    }
+    currentOrder.refresh();
+    checkIfModified();
+  }
+
   void setAbsoluteQuantity(int index, int quantity) {
+    int currentQty = currentOrder[index]['quantity'];
+    
+    // Waiter restriction: cannot decrease sent items
+    if (isWaiter && currentOrder[index]['isNew'] == false && quantity < currentQty) {
+      Get.snackbar("Cheklov", "Ofitsiant yuborilgan mahsulotni kamaytira olmaydi", 
+        backgroundColor: Colors.orange, colorText: Colors.white);
+      return;
+    }
+
     if (quantity > 0) {
       currentOrder[index]['quantity'] = quantity;
     } else {
-      currentOrder.removeAt(index);
+      if (currentOrder[index]['isNew'] == false) {
+        currentOrder[index]['quantity'] = 0;
+      } else {
+        currentOrder.removeAt(index);
+      }
     }
     currentOrder.refresh();
     checkIfModified();
