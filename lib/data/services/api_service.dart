@@ -447,7 +447,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> getLatestVersion() async {
     try {
-      final response = await _dio.get('/system/version');
+      final response = await _dio.get('/system/version', queryParameters: {'app': 'waiter'});
       return response.data;
     } catch (e) {
       rethrow;
