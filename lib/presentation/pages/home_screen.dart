@@ -61,10 +61,9 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          floatingActionButton: isMobile && pos.currentOrder.isNotEmpty 
+          bottomNavigationBar: isMobile && pos.currentOrder.isNotEmpty 
             ? _buildMobileCartButton(pos, context) 
             : null,
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         ),
         if (pos.isPrinting.value) const PrintingOverlay(),
       ],
@@ -774,24 +773,38 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildMobileCartButton(POSController pos, BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
       ),
-      child: InkWell(
-        onTap: () => Get.to(() => const CartScreen()),
-        child: Row(
-          children: [
-            const Icon(Icons.shopping_cart, color: Colors.white, size: 20),
-            const SizedBox(width: 12),
-            Text("${pos.totalItems} ${'items'.tr}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            const Spacer(),
-            Text("${NumberFormat("#,###", "uz_UZ").format(pos.total)} ${pos.currencySymbol}", 
-              style: const TextStyle(color: Color(0xFFFF9500), fontWeight: FontWeight.w900, fontSize: 16)),
-          ],
+      child: SafeArea(
+        child: InkWell(
+          onTap: () => Get.bottomSheet(
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+                child: const CartScreen(),
+              ),
+            ),
+            isScrollControlled: true,
+            ignoreSafeArea: false,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                const Icon(Icons.shopping_cart, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text("${pos.totalItems} ${'items'.tr}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                const Spacer(),
+                const Icon(Icons.keyboard_arrow_up, color: Colors.white),
+                const SizedBox(width: 8),
+                Text("${NumberFormat("#,###", "uz_UZ").format(pos.total)} ${pos.currencySymbol}", 
+                  style: const TextStyle(color: Color(0xFFFF9500), fontWeight: FontWeight.w900, fontSize: 16)),
+              ],
+            ),
+          ),
         ),
       ),
     );

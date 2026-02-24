@@ -22,7 +22,12 @@ class MainNavigationScreen extends StatelessWidget {
       {"icon": Icons.settings_rounded, "label": "settings".tr, "page": const SettingsScreen()},
     ];
 
-    final filteredMenu = menuItems; 
+    final filteredMenu = menuItems.where((item) {
+      if (item['page'] is OrdersScreen) {
+        return !pos.isWaiter;
+      }
+      return true;
+    }).toList();
 
     return Obx(() => Stack(
       children: [

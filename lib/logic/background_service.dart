@@ -6,6 +6,9 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:vibration/vibration.dart';
+import '../data/services/socket_service.dart';
 
 Future<void> initializeService() async {
   if (!(Platform.isAndroid || Platform.isIOS)) {
@@ -29,6 +32,19 @@ Future<void> initializeService() async {
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channel);
+
+      const AndroidNotificationChannel callerChannel = AndroidNotificationChannel(
+        'waiter_call_channel',
+        'Xodim chaqiruvlari',
+        description: 'Bu kanal ofitsiantlarni chaqirish uchun ishlatiladi.',
+        importance: Importance.max,
+        playSound: true,
+      );
+
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(callerChannel);
   }
 
   await service.configure(
@@ -73,6 +89,58 @@ void onStart(ServiceInstance service) async {
   service.on('stopService').listen((event) {
     service.stopSelf();
   });
+
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  
+  if (Platform.isAndroid) {
+    await flutterLocalNotificationsPlugin.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/launcher_icon'),
+      ),
+    );
+  }
+
+  final user = storage.read('user');
+  if (user != null) {
+    final waiterCafeId = storage.read('waiter_cafe_id');
+    final String cafeId = waiterCafeId ?? user['cafe_id']?.toString() ?? "";
+    
+    if (cafeId.isNotEmpty) {
+      final socketService = SocketService();
+      socketService.setCafeId(cafeId);
+      final audioPlayer = AudioPlayer();
+      
+      socketService.onWaiterCall((data) async {
+        if (user['id']?.toString() == data['waiter_id']?.toString()) {
+          try {
+            await audioPlayer.play(UrlSource('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
+          } catch (e) {
+            print("Background sound playback error: $e");
+          }
+          
+          if (await Vibration.hasVibrator()) {
+            Vibration.vibrate(duration: 2000, amplitude: 255);
+          }
+          
+          if (Platform.isAndroid) {
+            const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+              'waiter_call_channel',
+              'Xodim chaqiruvlari',
+              importance: Importance.max,
+              priority: Priority.high,
+            );
+            const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidDetails);
+            flutterLocalNotificationsPlugin.show(
+              DateTime.now().millisecond,
+              'Chaqiruv!',
+              '${data['sender_name']} sizni chaqirmoqda',
+              platformChannelSpecifics,
+            );
+          }
+        }
+      });
+    }
+  }
 
   Timer.periodic(const Duration(seconds: 30), (timer) async {
     if (service is AndroidServiceInstance) {
