@@ -172,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                         _buildMockupLogo(),
                         const SizedBox(height: 48),
                         const Text(
-                          'Fast Food Pro',
+                          'Fayz',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 48,
@@ -357,7 +357,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       Text(
-                        '© 2024 FAST FOOD PRO',
+                        '© 2024 FAYZ',
                         style: TextStyle(
                           color: Colors.grey.shade400,
                           fontSize: 12,
