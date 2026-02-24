@@ -40,7 +40,20 @@ abstract class POSControllerState extends GetxController {
   var preparationAreas = <PreparationAreaModel>[].obs;
   var printers = <PrinterModel>[].obs;
   var selectedCategory = "All".obs;
+  var searchQuery = "".obs;
   var users = <Map<String, dynamic>>[].obs;
+
+  List<FoodItem> get filteredProducts {
+    var list = selectedCategory.value == "All"
+        ? products
+        : products.where((p) => p.category == selectedCategory.value).toList();
+
+    if (searchQuery.value.isNotEmpty) {
+      final query = searchQuery.value.toLowerCase();
+      list = list.where((p) => p.name.toLowerCase().contains(query)).toList();
+    }
+    return list;
+  }
 
   var selectedTable = "".obs;
   var lockedTables = <String, String>{}.obs; // {"tableId": "userName"}

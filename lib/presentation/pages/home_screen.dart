@@ -11,8 +11,21 @@ import '../widgets/printing_overlay.dart';
 import 'package:intl/intl.dart';
 import 'main_navigation_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,12 +61,8 @@ class HomeScreen extends StatelessWidget {
                     _buildTopBar(pos, context),
                     _buildCategories(pos, context),
                     Expanded(
-                      child: Builder(builder: (context) {
-                        final cat = pos.selectedCategory.value;
-                        final items = cat == "All" 
-                          ? pos.products 
-                          : pos.products.where((p) => p.category == cat).toList();
-                        return _buildItemsGrid(items, context);
+                      child: Obx(() {
+                        return _buildItemsGrid(pos.filteredProducts, context);
                       }),
                     ),
                   ],
@@ -132,15 +141,26 @@ class HomeScreen extends StatelessWidget {
                 color: const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: TextField(
+              child: Obx(() => TextField(
+                controller: _searchController,
+                onChanged: (val) => pos.searchQuery.value = val,
                 decoration: InputDecoration(
                   hintText: 'search_hint'.tr,
-                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF)),
+                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13, fontWeight: FontWeight.w500),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
+                  suffixIcon: pos.searchQuery.value.isNotEmpty 
+                    ? IconButton(
+                        icon: const Icon(Icons.cancel_rounded, size: 20, color: Color(0xFF9CA3AF)),
+                        onPressed: () {
+                          _searchController.clear();
+                          pos.searchQuery.value = "";
+                        },
+                      ) 
+                    : null,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
-              ),
+              )),
             ),
           ),
           const SizedBox(width: 16),
@@ -251,6 +271,19 @@ class HomeScreen extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => pos.addToCart(item),
+      onLongPress: () {
+        for (int i = 0; i < 5; i++) {
+          pos.addToCart(item);
+        }
+        Get.snackbar(
+          "Tezkor qo'shish", 
+          "${item.name}dan 5 ta qo'shildi",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 1),
+        );
+      },
       child: Obx(() {
         final int qty = pos.currentOrder
             .where((e) => (e['item'] as FoodItem).id == item.id)

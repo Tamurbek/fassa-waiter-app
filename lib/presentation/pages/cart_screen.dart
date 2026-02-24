@@ -201,106 +201,117 @@ class CartScreen extends StatelessWidget {
     final bool isCancelled = !isNew && quantity == 0;
     final bool isPartialCancelled = !isNew && quantity < sentQty && quantity > 0;
 
-    return Opacity(
-      opacity: isCancelled ? 0.6 : 1.0,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isNew 
-            ? const Color(0xFFEFF6FF) 
-            : (isCancelled ? Colors.grey.shade50 : AppColors.white),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-          border: isNew ? Border.all(color: Colors.blue.shade100) : null,
-        ),
-        child: Row(
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(15), 
-                  child: CommonImage(
-                    imageUrl: item.imageUrl,
-                    width: 70,
-                    height: 70,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                if (isCancelled)
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(15)),
-                      child: const Icon(Icons.close, color: Colors.white, size: 30),
+    return Dismissible(
+      key: Key("cart_item_${item.id}_$index"),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(20)),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      onDismissed: (_) => pos.removeFromCart(index),
+      child: Opacity(
+        opacity: isCancelled ? 0.6 : 1.0,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isNew 
+              ? const Color(0xFFEFF6FF) 
+              : (isCancelled ? Colors.grey.shade50 : AppColors.white),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+            border: isNew ? Border.all(color: Colors.blue.shade100) : null,
+          ),
+          child: Row(
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(15), 
+                    child: CommonImage(
+                      imageUrl: item.imageUrl,
+                      width: 70,
+                      height: 70,
+                      fit: BoxFit.cover,
                     ),
                   ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(item.name, 
-                          style: TextStyle(
-                            fontSize: 15, 
-                            fontWeight: FontWeight.bold, 
-                            color: AppColors.textPrimary,
-                            decoration: isCancelled ? TextDecoration.lineThrough : null,
-                          )
-                        ),
-                      ),
-                      if (isNew)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(8)),
-                          child: const Text("Yangi", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  if (isPartialCancelled)
-                    Text("${sentQty - quantity} ta bekor qilindi", 
-                      style: const TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold))
-                  else if (isCancelled)
-                    const Text("Bekor qilingan", 
-                      style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold))
-                  else
-                    Text("\$${item.price.toStringAsFixed(2)}", 
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
-                  if (cartItem['createdAt'] != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        "Vaqti: ${DateTime.parse(cartItem['createdAt']).toLocal().toString().substring(11, 16)}",
-                        style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                  if (isCancelled)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(15)),
+                        child: const Icon(Icons.close, color: Colors.white, size: 30),
                       ),
                     ),
                 ],
               ),
-            ),
-            Column(
-              children: [
-                _buildSmallQtyBtn(Icons.add, () => pos.updateQuantity(index, 1), isPrimary: true),
-                GestureDetector(
-                  onTap: () => pos.showQuantityDialog(index),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8), 
-                    child: Text(quantity.toString(), 
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold, 
-                        fontSize: 16,
-                        color: isCancelled ? Colors.red : AppColors.textPrimary,
-                      )
-                    )
-                  ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(item.name, 
+                            style: TextStyle(
+                              fontSize: 15, 
+                              fontWeight: FontWeight.bold, 
+                              color: AppColors.textPrimary,
+                              decoration: isCancelled ? TextDecoration.lineThrough : null,
+                            )
+                          ),
+                        ),
+                        if (isNew)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(8)),
+                            child: const Text("Yangi", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    if (isPartialCancelled)
+                      Text("${sentQty - quantity} ta bekor qilindi", 
+                        style: const TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold))
+                    else if (isCancelled)
+                      const Text("Bekor qilingan", 
+                        style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold))
+                    else
+                      Text("\$${item.price.toStringAsFixed(2)}", 
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                    if (cartItem['createdAt'] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          "Vaqti: ${DateTime.parse(cartItem['createdAt']).toLocal().toString().substring(11, 16)}",
+                          style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                        ),
+                      ),
+                  ],
                 ),
-                _buildSmallQtyBtn(Icons.remove, () => pos.updateQuantity(index, -1)),
-              ],
-            ),
-          ],
+              ),
+              Column(
+                children: [
+                  _buildSmallQtyBtn(Icons.add, () => pos.updateQuantity(index, 1), isPrimary: true),
+                  GestureDetector(
+                    onTap: () => pos.showQuantityDialog(index),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8), 
+                      child: Text(quantity.toString(), 
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 16,
+                          color: isCancelled ? Colors.red : AppColors.textPrimary,
+                        )
+                      )
+                    ),
+                  ),
+                  _buildSmallQtyBtn(Icons.remove, () => pos.updateQuantity(index, -1)),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

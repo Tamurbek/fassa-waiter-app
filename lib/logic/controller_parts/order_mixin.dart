@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/models/food_item.dart';
 import 'pos_controller_state.dart';
+import 'package:vibration/vibration.dart';
 
 mixin OrderMixin on POSControllerState {
   double get subtotal => currentOrder.fold(0, (sum, item) => sum + ((item['item'] as FoodItem).price * (item['quantity'] as int)));
@@ -22,6 +23,7 @@ mixin OrderMixin on POSControllerState {
   double get total => subtotal + serviceFee;
 
   void addToCart(FoodItem item) {
+    Vibration.vibrate(duration: 50, amplitude: 128);
     int index = currentOrder.indexWhere((e) => e['item'].id == item.id && e['isNew'] == true);
     if (index != -1) {
       currentOrder[index]['quantity']++;
@@ -33,6 +35,7 @@ mixin OrderMixin on POSControllerState {
   }
 
   void decrementFromCart(FoodItem item) {
+    Vibration.vibrate(duration: 30, amplitude: 64);
     int index = currentOrder.indexWhere((e) => e['item'].id == item.id && e['isNew'] == true);
     if (index != -1) {
       if (currentOrder[index]['quantity'] > 1) {
