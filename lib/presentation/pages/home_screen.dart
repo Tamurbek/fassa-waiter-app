@@ -778,32 +778,70 @@ class HomeScreen extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
       ),
       child: SafeArea(
-        child: InkWell(
-          onTap: () => Get.bottomSheet(
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
-                child: const CartScreen(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => Get.bottomSheet(
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+                        child: const CartScreen(),
+                      ),
+                    ),
+                    isScrollControlled: true,
+                    ignoreSafeArea: false,
+                  ),
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.shopping_cart, color: Colors.white, size: 16),
+                            const SizedBox(width: 8),
+                            Text("${pos.totalItems} ta mahsulot", style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.keyboard_arrow_up, color: Colors.white70, size: 16),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text("${NumberFormat("#,###", "uz_UZ").format(pos.total)} ${pos.currencySymbol}", 
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-            isScrollControlled: true,
-            ignoreSafeArea: false,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                const Icon(Icons.shopping_cart, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text("${pos.totalItems} ${'items'.tr}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                const Icon(Icons.keyboard_arrow_up, color: Colors.white),
-                const SizedBox(width: 8),
-                Text("${NumberFormat("#,###", "uz_UZ").format(pos.total)} ${pos.currencySymbol}", 
-                  style: const TextStyle(color: Color(0xFFFF9500), fontWeight: FontWeight.w900, fontSize: 16)),
-              ],
-            ),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  if (!pos.hasNewItems) {
+                    Get.snackbar("Eslatma", "Oshxonaga yuborish uchun yangi mahsulot qo'shilmadi", 
+                      backgroundColor: Colors.orange, colorText: Colors.white);
+                    return;
+                  }
+                  bool success = await pos.submitOrder(isPaid: false);
+                  if (success) {
+                    Get.offAll(() => const MainNavigationScreen());
+                  }
+                },
+                icon: const Icon(Icons.soup_kitchen_rounded, size: 20),
+                label: const Text("Oshxonaga"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF9500),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ],
           ),
         ),
       ),
