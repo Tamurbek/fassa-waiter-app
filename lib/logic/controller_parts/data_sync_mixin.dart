@@ -230,7 +230,8 @@ mixin DataSyncMixin on POSControllerState {
     socket.onOrderStatusUpdated((data) {
       int index = allOrders.indexWhere((o) => o['id'] == data['orderId']);
       if (index != -1) {
-        allOrders[index]['status'] = data['status'].toString().toLowerCase().capitalizeFirst;
+        String rawStatus = data['status'].toString();
+        allOrders[index]['status'] = rawStatus.replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" ");
         allOrders.refresh();
         saveAllOrders();
       }
