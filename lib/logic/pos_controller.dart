@@ -138,7 +138,11 @@ class POSController extends POSControllerState with
       if (currentUser.value?['id']?.toString() == data['waiter_id'].toString()) {
         _playAlertSound();
         Get.snackbar("Chaqiruv!", "${data['sender_name']} sizni chaqirmoqda", 
-          backgroundColor: Colors.red, colorText: Colors.white, duration: const Duration(seconds: 10));
+          backgroundColor: Colors.red.withOpacity(0.9), 
+          colorText: Colors.white, 
+          duration: const Duration(seconds: 5),
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
     });
   }

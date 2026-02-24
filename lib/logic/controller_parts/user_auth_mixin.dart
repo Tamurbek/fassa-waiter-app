@@ -72,7 +72,12 @@ mixin UserAuthMixin on POSControllerState {
       final response = await api.updateLocation(position.latitude, position.longitude);
       if (response['status'] == 'warning') {
         isWithinGeofence.value = false;
-        Get.snackbar("Eslatma", response['message'] ?? 'Hududdan tashqaridasiz.', backgroundColor: Colors.orange, colorText: Colors.white);
+        Get.snackbar("Eslatma", response['message'] ?? 'Hududdan tashqaridasiz.', 
+          backgroundColor: Colors.orange.withOpacity(0.8), 
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+          snackPosition: SnackPosition.BOTTOM,
+        );
       } else {
         isWithinGeofence.value = true;
       }
@@ -114,10 +119,10 @@ mixin UserAuthMixin on POSControllerState {
           Get.snackbar(
             'Obuna tugayapti!',
             'Obuna muddati $days kun ichida tugaydi. Iltimos, muddatni uzaytiring.',
-            backgroundColor: Colors.orange,
+            backgroundColor: Colors.orange.withOpacity(0.9),
             colorText: Colors.white,
-            duration: const Duration(seconds: 8),
-            snackPosition: SnackPosition.TOP,
+            duration: const Duration(seconds: 4),
+            snackPosition: SnackPosition.BOTTOM,
             icon: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 28),
             margin: const EdgeInsets.all(12),
           );

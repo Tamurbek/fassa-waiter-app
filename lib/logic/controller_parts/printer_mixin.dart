@@ -23,7 +23,13 @@ mixin PrinterMixin on POSControllerState {
         'receiptTitle': receiptTitle,
         'sender': currentUser.value?['name'] ?? "Waiter",
       });
-      Get.snackbar("Chop etish yuborildi", "Kassaga yuborildi", backgroundColor: Colors.blue, colorText: Colors.white);
+      Get.snackbar("Chop etish yuborildi", "Kassaga yuborildi", 
+        backgroundColor: Colors.blue.withOpacity(0.8), 
+        colorText: Colors.white,
+        duration: const Duration(seconds: 1),
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(10),
+      );
       return;
     }
 
@@ -160,7 +166,13 @@ mixin PrinterMixin on POSControllerState {
     if (failedPrinters.isNotEmpty) {
       Get.snackbar("Printer Error", "Failed: ${failedPrinters.join(', ')}", backgroundColor: Colors.red, colorText: Colors.white);
     } else if (successPrinters.isNotEmpty) {
-      Get.snackbar("Printer", "Muvaffaqiyatli chop etildi", backgroundColor: Colors.green, colorText: Colors.white);
+      Get.snackbar("Printer", "Muvaffaqiyatli chop etildi", 
+        backgroundColor: Colors.green.withOpacity(0.8), 
+        colorText: Colors.white,
+        duration: const Duration(seconds: 1),
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(10),
+      );
     }
   }
 
