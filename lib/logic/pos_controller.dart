@@ -25,6 +25,8 @@ class POSController extends POSControllerState with
     StaffMixin,
     TableMixin {
 
+  final Map<String, DateTime> _processedPrintIds = {};
+
   @override
   void onInit() {
     super.onInit();
@@ -132,6 +134,15 @@ class POSController extends POSControllerState with
         saveAllOrders();
 
         if (isAdmin || isCashier) {
+          final orderId = data['id']?.toString();
+          if (orderId != null) {
+            final now = DateTime.now();
+            if (_processedPrintIds.containsKey(orderId) && 
+                now.difference(_processedPrintIds[orderId]!).inSeconds < 10) {
+              return;
+            }
+            _processedPrintIds[orderId] = now;
+          }
           printLocally(normalized, isKitchenOnly: true);
         }
       }
@@ -139,6 +150,16 @@ class POSController extends POSControllerState with
 
     socket.onPrintRequest((data) async {
       if (isAdmin || isCashier) {
+        final orderId = data['order']?['id']?.toString();
+        if (orderId != null) {
+          final now = DateTime.now();
+          if (_processedPrintIds.containsKey(orderId) && 
+              now.difference(_processedPrintIds[orderId]!).inSeconds < 10) {
+            return;
+          }
+          _processedPrintIds[orderId] = now;
+        }
+
         final Map<String, dynamic> order = Map<String, dynamic>.from(data['order']);
         if (data['sender'] != null) order['waiter_name'] = data['sender'];
         final bool isKitchenOnly = data['isKitchenOnly'] == true;
@@ -225,7 +246,12 @@ class POSController extends POSControllerState with
         allOrders[index] = normalized;
       }
       
-      await printOrder(normalized, isKitchenOnly: !isPaid, 
+    final orderId = normalized['id']?.toString();
+    if (orderId != null) {
+      _processedPrintIds[orderId] = DateTime.now();
+    }
+
+    await printOrder(normalized, isKitchenOnly: !isPaid, 
         receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
 
       clearCurrentOrder();
@@ -307,7 +333,13 @@ class POSController extends POSControllerState with
         // Update allOrders with new details
         allOrders[index] = orderToPrint;
 
-        await printOrder(orderToPrint, isKitchenOnly: !isPaid, 
+      
+      final orderId = editingOrderId.value?.toString();
+      if (orderId != null) {
+        _processedPrintIds[orderId] = DateTime.now();
+      }
+
+      await printOrder(orderToPrint, isKitchenOnly: !isPaid, 
           receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
 
         allOrders.refresh();
