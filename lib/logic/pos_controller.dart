@@ -98,6 +98,23 @@ class POSController extends POSControllerState with
       }
     }
 
+    var storedPrinted = storage.read('printed_kitchen_items');
+    if (storedPrinted != null) {
+      try {
+        Map<String, Map<String, int>> parsed = {};
+        (storedPrinted as Map).forEach((orderId, items) {
+          if (items is Map) {
+            Map<String, int> itemMap = {};
+            items.forEach((pId, qty) {
+              itemMap[pId.toString()] = (qty as num).toInt();
+            });
+            parsed[orderId.toString()] = itemMap;
+          }
+        });
+        printedKitchenQuantities.assignAll(parsed);
+      } catch (e) { print("Error parsing printed_kitchen_items: $e"); }
+    }
+
     if (currentUser.value != null) {
       socket.setCafeId(cafeId);
     }
@@ -175,11 +192,24 @@ class POSController extends POSControllerState with
       "is_paid": isPaid,
       "waiter_name": selectedWaiter.value ?? currentUser.value?['name'],
       "cafe_id": cafeId,
-      "items": currentOrder.map((e) => {
-        "product_id": (e['item'] as FoodItem).id,
-        "quantity": e['quantity'],
-        "price": (e['item'] as FoodItem).price
-      }).toList(),
+      "items": () {
+        final Map<String, Map<String, dynamic>> grouped = {};
+        for (var e in currentOrder) {
+          final String id = (e['item'] as FoodItem).id.toString();
+          final int qty = e['quantity'] as int;
+          if (qty <= 0) continue;
+          if (grouped.containsKey(id)) {
+            grouped[id]!['quantity'] += qty;
+          } else {
+            grouped[id] = {
+              "product_id": id,
+              "quantity": qty,
+              "price": (e['item'] as FoodItem).price
+            };
+          }
+        }
+        return grouped.values.toList();
+      }(),
     };
 
     try {
@@ -215,32 +245,48 @@ class POSController extends POSControllerState with
       final newStatus = isPaid ? "Completed" : "Preparing";
       List<Map<String, dynamic>> consolidatedList = [];
       List<Map<String, dynamic>> cancelledItems = [];
+      final Map<String, Map<String, dynamic>> grouped = {};
+      final Map<String, int> totalSentQty = {};
 
       for (var e in currentOrder) {
         final item = e['item'] as FoodItem;
+        final String id = item.id.toString();
         final int qty = e['quantity'];
         final int sentQty = e['sentQty'] ?? 0;
 
-        if (qty > 0) {
-          consolidatedList.add({
-            "id": item.id,
-            "product_id": item.id,
-            "name": item.name,
-            "qty": qty,
-            "quantity": qty,
-            "price": item.price,
-          });
-        }
+        totalSentQty[id] = (totalSentQty[id] ?? 0) + sentQty;
 
-        // track cancellations for receipt display
-        if (qty < sentQty) {
-          cancelledItems.add({
-            "id": item.id,
-            "name": item.name,
-            "qty": sentQty - qty,
-          });
+        if (qty > 0) {
+          if (grouped.containsKey(id)) {
+            grouped[id]!['qty'] += qty;
+            grouped[id]!['quantity'] += qty;
+          } else {
+            grouped[id] = {
+              "id": id,
+              "product_id": id,
+              "name": item.name,
+              "qty": qty,
+              "quantity": qty,
+              "price": item.price,
+            };
+          }
         }
       }
+
+      consolidatedList = grouped.values.toList();
+
+      // track cancellations for receipt display
+      totalSentQty.forEach((id, sentQty) {
+        final int currentQty = grouped[id]?['qty'] ?? 0;
+        if (currentQty < sentQty) {
+          final item = currentOrder.firstWhere((e) => (e['item'] as FoodItem).id.toString() == id)['item'] as FoodItem;
+          cancelledItems.add({
+            "id": id,
+            "name": item.name,
+            "qty": sentQty - currentQty,
+          });
+        }
+      });
 
       await api.updateOrderStatus(editingOrderId.value!, newStatus);
       await api.updateOrder(editingOrderId.value!, {

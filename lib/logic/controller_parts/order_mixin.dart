@@ -241,5 +241,16 @@ mixin OrderMixin on POSControllerState {
       "qty": e['quantity'],
     }).toList().toString();
     isOrderModified.value = false;
+
+    // Sync printed quantities for kitchen
+    final String orderIdStr = order['id'].toString();
+    if (!printedKitchenQuantities.containsKey(orderIdStr)) {
+      final Map<String, int> printedMap = {};
+      for (var d in details) {
+        printedMap[d['id'].toString()] = d['qty'] as int;
+      }
+      printedKitchenQuantities[orderIdStr] = printedMap;
+      storage.write('printed_kitchen_items', Map.from(printedKitchenQuantities));
+    }
   }
 }

@@ -187,21 +187,39 @@ mixin DataSyncMixin on POSControllerState {
     final statusStr = o['status'] ?? 'PENDING';
     final timestamp = o['createdAt'] ?? o['created_at'];
 
+    final List itemsList = o['items'] as List? ?? [];
+    final Map<String, Map<String, dynamic>> groupedDetails = {};
+
+    for (var i in itemsList) {
+      final String id = (i['productId'] ?? i['product_id']).toString();
+      final String name = i['product'] != null ? i['product']['name'] : (i['name'] ?? "Unknown");
+      final int qty = (i['quantity'] ?? i['qty'] ?? 0) as int;
+      final double price = double.tryParse((i['price'] ?? 0).toString()) ?? 0.0;
+
+      if (groupedDetails.containsKey(id)) {
+        groupedDetails[id]!['qty'] += qty;
+      } else {
+        groupedDetails[id] = {
+          "id": id,
+          "name": name,
+          "qty": qty,
+          "price": price,
+        };
+      }
+    }
+
+    final details = groupedDetails.values.toList();
+
     return {
       "id": o['id'],
       "table": tableNum != null ? tableNum.toString() : "-",
       "mode": typeStr.toString().toLowerCase().replaceAll("_", "-").capitalizeFirst,
-      "items": (o['items'] as List?)?.fold(0, (sum, item) => sum + ((item['quantity'] ?? item['qty'] ?? 0) as int)) ?? 0,
+      "items": details.fold(0, (sum, item) => sum + (item['qty'] as int)),
       "total": double.tryParse(totalAmt.toString()) ?? 0.0,
       "status": statusStr.toString().replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" "),
       "waiter_name": o['waiter_name'],
       "timestamp": timestamp,
-      "details": (o['items'] as List? ?? []).map((i) => {
-        "id": i['productId'] ?? i['product_id'],
-        "name": i['product'] != null ? i['product']['name'] : "Unknown",
-        "qty": i['quantity'] ?? i['qty'],
-        "price": double.tryParse((i['price'] ?? 0).toString()) ?? 0.0,
-      }).toList(),
+      "details": details,
     };
   }
 
