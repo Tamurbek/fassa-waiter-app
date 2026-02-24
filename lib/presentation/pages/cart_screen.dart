@@ -249,7 +249,7 @@ class CartScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text("\$${item.price.toStringAsFixed(2)}", style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+                  Text("${item.price.toStringAsFixed(0)} ${pos.currency.value}", style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
                 ],
               ),
             ),
@@ -304,7 +304,7 @@ class CartScreen extends StatelessWidget {
               children: [
                 Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey, decoration: TextDecoration.lineThrough)),
                 const SizedBox(height: 2),
-                Text("-\$${(item.price * cancelledQty).toStringAsFixed(2)} ($cancelledQty ta)", style: TextStyle(color: Colors.red.shade300, fontWeight: FontWeight.w600, fontSize: 11)),
+                Text("-${(item.price * cancelledQty).toStringAsFixed(0)} ($cancelledQty ta)", style: TextStyle(color: Colors.red.shade300, fontWeight: FontWeight.w600, fontSize: 11)),
               ],
             ),
           ),
@@ -323,7 +323,7 @@ class CartScreen extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(10), // Larger tap area
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isAdd ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
@@ -353,7 +353,7 @@ class CartScreen extends StatelessWidget {
                   children: [
                     Text("Jami summa", style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
-                    Text("\$${pos.total.toStringAsFixed(2)}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                    Text("${pos.total.toStringAsFixed(0)} ${pos.currency.value}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
                   ],
                 ),
                 if (pos.isOrderModified.value)
