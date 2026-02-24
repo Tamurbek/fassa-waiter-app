@@ -155,12 +155,15 @@ void onStart(ServiceInstance service) async {
     try {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 10),
       );
 
+      final String baseUrl = storage.read('api_url') ?? 'https://cafe-backend-code-production.up.railway.app';
+
       final dio = Dio(BaseOptions(
-        baseUrl: 'https://cafe-backend-code-production.up.railway.app',
-        connectTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 3),
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
         headers: {'Authorization': 'Bearer $token'},
       ));
 

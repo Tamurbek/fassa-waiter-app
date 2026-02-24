@@ -36,6 +36,12 @@ mixin UserAuthMixin on POSControllerState {
       permission = await Geolocator.requestPermission();
     }
     
+    // For background tracking, it's best to have 'always' permission if possible
+    if (permission == LocationPermission.whileInUse) {
+       // Optional: you could request 'always' here but it might be annoying
+       // For now, whileInUse is enough to start the service
+    }
+    
     if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
       sendLocationUpdate();
       if (Platform.isAndroid || Platform.isIOS) {
