@@ -22,7 +22,7 @@ class MainNavigationScreen extends StatelessWidget {
       {"icon": Icons.settings_rounded, "label": "settings".tr, "page": const SettingsScreen()},
     ];
 
-    final filteredMenu = menuItems; // No filtering needed in Waiter app
+    final filteredMenu = menuItems; 
 
     return Obx(() => Stack(
       children: [
@@ -39,6 +39,8 @@ class MainNavigationScreen extends StatelessWidget {
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))],
               ),
               child: SafeArea(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: List.generate(filteredMenu.length, (index) {
                     return _buildMobileNavItem(index, currentIndex, filteredMenu[index]['icon'] as IconData);
                   }),
@@ -61,7 +63,6 @@ class MainNavigationScreen extends StatelessWidget {
           ),
         ),
 
-        // Subscription Warning Banner
         if (pos.subscriptionDaysLeft.value != null && 
             pos.subscriptionDaysLeft.value! <= 3 && 
             pos.subscriptionDaysLeft.value! >= 0)
@@ -84,7 +85,6 @@ class MainNavigationScreen extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            // _buildToggleItem, _showPaperSizeDialog, _showEditDialog removed for cleaner waiter app
             padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
             child: Row(
               children: [
@@ -186,9 +186,6 @@ class MainNavigationScreen extends StatelessWidget {
     );
   }
 
-  // Unused dialogs removed for clarity
-
-
   Widget _buildSubscriptionBanner(POSController pos) {
     return Material(
       elevation: 4,
@@ -229,18 +226,19 @@ class MainNavigationScreen extends StatelessWidget {
   }
 
   Widget _buildMobileNavItem(int index, RxInt currentIndex, IconData icon) {
-    final isSel = currentIndex.value == index;
-    return GestureDetector(
-      onTap: () => currentIndex.value = index,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: isSel ? const Color(0xFFFF9500) : const Color(0xFF9CA3AF), size: 26),
-          if (isSel)
-            Container(margin: const EdgeInsets.only(top: 4), width: 4, height: 4, decoration: const BoxDecoration(color: Color(0xFFFF9500), shape: BoxShape.circle)),
-        ],
-      ),
-    );
+    return Obx(() {
+      final isSel = currentIndex.value == index;
+      return GestureDetector(
+        onTap: () => currentIndex.value = index,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: isSel ? const Color(0xFFFF9500) : const Color(0xFF9CA3AF), size: 26),
+            if (isSel)
+              Container(margin: const EdgeInsets.only(top: 4), width: 4, height: 4, decoration: const BoxDecoration(color: Color(0xFFFF9500), shape: BoxShape.circle)),
+          ],
+        ),
+      );
+    });
   }
 }
-
