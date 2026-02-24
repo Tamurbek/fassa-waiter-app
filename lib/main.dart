@@ -11,6 +11,7 @@ import 'presentation/pages/settings_screen.dart';
 import 'presentation/pages/auth/staff_selection_page.dart';
 import 'presentation/pages/auth/terminal_login_page.dart';
 import 'presentation/pages/auth/qr_scanner_page.dart';
+import 'presentation/pages/auth/welcome_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'logic/background_service.dart';
 import 'presentation/components/location_checker.dart';
@@ -61,6 +62,7 @@ class FastFoodApp extends StatelessWidget {
         GetPage(name: '/settings', page: () => const SettingsScreen()),
         GetPage(name: '/staff-selection', page: () => const StaffSelectionPage()),
         GetPage(name: '/terminal-login', page: () => const TerminalLoginPage()),
+        GetPage(name: '/welcome', page: () => const WelcomePage()),
       ],
     );
   }
@@ -78,8 +80,8 @@ class FastFoodApp extends StatelessWidget {
       if (pos.waiterCafeId.value != null) {
         return StaffSelectionPage(cafeId: pos.waiterCafeId.value, isFromTerminal: false);
       } else {
-        // Initial setup for waiter: scan QR code to link with cafe
-        return const QRScannerPage();
+        // Initial setup for waiter: show welcome page first
+        return const WelcomePage();
       }
     }
     
