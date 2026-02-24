@@ -107,7 +107,7 @@ class POSController extends POSControllerState with
     setupSocketListeners();
     
     socket.onNewOrder((data) {
-      int index = allOrders.indexWhere((o) => o['id'] == data['id']);
+      int index = allOrders.indexWhere((o) => o['id'].toString() == data['id'].toString());
       if (index == -1) {
         final normalized = normalizeOrder(data);
         allOrders.insert(0, normalized);
@@ -185,7 +185,15 @@ class POSController extends POSControllerState with
     try {
       final newOrder = await api.createOrder(orderData);
       final normalized = normalizeOrder(newOrder);
-      allOrders.insert(0, normalized);
+      
+      // Check if already added by socket to prevent duplicates
+      int index = allOrders.indexWhere((o) => o['id'].toString() == normalized['id'].toString());
+      if (index == -1) {
+        allOrders.insert(0, normalized);
+      } else {
+        // Update existing if needed (though it should be the same)
+        allOrders[index] = normalized;
+      }
       
       await printOrder(normalized, isKitchenOnly: !isPaid, 
         receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
@@ -220,7 +228,7 @@ class POSController extends POSControllerState with
         "items": consolidatedList.map((i) => { "product_id": i["id"], "quantity": i["qty"], "price": i["price"] }).toList()
       });
       
-      int index = allOrders.indexWhere((o) => o['id'] == editingOrderId.value);
+      int index = allOrders.indexWhere((o) => o['id'].toString() == editingOrderId.value.toString());
       if (index != -1) {
         allOrders[index]['items'] = totalItems;
         allOrders[index]['total'] = total;
