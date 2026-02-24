@@ -67,6 +67,10 @@ class SocketService {
     socket.on('printRequest', (data) => callback(data));
   }
 
+  void emitPrintAck(String jobId) {
+    socket.emit('printAck', {'job_id': jobId});
+  }
+
   void emitTableLock(String tableId, String userName) {
     socket.emit('tableLock', {
       'tableId': tableId, 

@@ -119,12 +119,18 @@ class POSController extends POSControllerState with
       }
     });
 
-    socket.onPrintRequest((data) {
+    socket.onPrintRequest((data) async {
       if (isAdmin || isCashier) {
         final Map<String, dynamic> order = Map<String, dynamic>.from(data['order']);
         if (data['sender'] != null) order['waiter_name'] = data['sender'];
         final bool isKitchenOnly = data['isKitchenOnly'] == true;
-        printLocally(order, isKitchenOnly: isKitchenOnly, receiptTitle: data['receiptTitle']);
+        
+        await printLocally(order, isKitchenOnly: isKitchenOnly, receiptTitle: data['receiptTitle']);
+        
+        // If it was a persistent job from DB, acknowledge it
+        if (data['job_id'] != null) {
+          socket.emitPrintAck(data['job_id']);
+        }
       }
     });
 
