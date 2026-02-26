@@ -270,8 +270,18 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isMobile = Responsive.isMobile(context);
 
     return GestureDetector(
-      onTap: () => pos.addToCart(item),
+      onTap: () {
+        if (item.hasVariants && item.variants.isNotEmpty) {
+          _showVariantPicker(context, item, pos);
+        } else {
+          pos.addToCart(item);
+        }
+      },
       onLongPress: () {
+        if (item.hasVariants && item.variants.isNotEmpty) {
+          _showVariantPicker(context, item, pos);
+          return;
+        }
         for (int i = 0; i < 5; i++) {
           pos.addToCart(item);
         }
@@ -328,8 +338,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("${NumberFormat("#,###", "uz_UZ").format(item.price)}", 
-                                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFFFF9500))),
+                                  if (item.hasVariants && item.variants.isNotEmpty)
+                                    const Text("Variantlar",
+                                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF0EA5E9)))
+                                  else
+                                    Text("${NumberFormat("#,###", "uz_UZ").format(item.price)}", 
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFFFF9500))),
                                   Text(pos.currencySymbol, style: const TextStyle(fontSize: 10, color: Color(0xFFFF9500), fontWeight: FontWeight.bold)),
                                 ],
                               ),
@@ -339,8 +353,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             else
                               Container(
                                 padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(color: const Color(0xFFFFF7ED), borderRadius: BorderRadius.circular(10)),
-                                child: const Icon(Icons.add, color: Color(0xFFFF9500), size: 18),
+                                decoration: BoxDecoration(
+                                  color: item.hasVariants ? const Color(0xFFE0F2FE) : const Color(0xFFFFF7ED),
+                                  borderRadius: BorderRadius.circular(10)
+                                ),
+                                child: Icon(
+                                  item.hasVariants ? Icons.expand_more : Icons.add,
+                                  color: item.hasVariants ? const Color(0xFF0EA5E9) : const Color(0xFFFF9500),
+                                  size: 18
+                                ),
                               ),
                           ],
                         ),
@@ -380,6 +401,63 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         );
       }),
+    );
+  }
+
+  void _showVariantPicker(BuildContext context, FoodItem item, POSController pos) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(item.name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+            const SizedBox(height: 8),
+            Text("Hajmni tanlang:", style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+            const SizedBox(height: 16),
+            ...item.variants.map((variant) => GestureDetector(
+              onTap: () {
+                pos.addToCart(item, variant: variant);
+                Navigator.pop(ctx);
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF7ED),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFFF9500).withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(variant.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(
+                      "${NumberFormat('#,###', 'uz_UZ').format(variant.price)} ${pos.currencySymbol}",
+                      style: const TextStyle(color: Color(0xFFFF9500), fontWeight: FontWeight.w900, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 
@@ -597,7 +675,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     const Text("Bekor qilingan", 
                       style: TextStyle(color: Colors.red, fontSize: 9, fontWeight: FontWeight.bold))
                   else
-                    Text("${NumberFormat("#,###", "uz_UZ").format(item.price)} ${pos.currencySymbol}", 
+                    Text(
+                      () {
+                        final variant = cartItem['variant'];
+                        final price = variant?.price ?? item.price;
+                        final variantLabel = variant != null ? " (${variant.name})" : "";
+                        return "${item.name}$variantLabel — ${NumberFormat('#,###', 'uz_UZ').format(price)} ${pos.currencySymbol}";
+                      }(),
                       style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11, fontWeight: FontWeight.bold)),
                 ],
               ),

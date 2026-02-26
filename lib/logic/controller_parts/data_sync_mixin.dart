@@ -192,17 +192,23 @@ mixin DataSyncMixin on POSControllerState {
 
     for (var i in itemsList) {
       final String id = (i['productId'] ?? i['product_id']).toString();
+      final String? variantId = i['variant_id']?.toString();
+      final String? variantName = i['variant_name']?.toString();
       final String name = i['product'] != null ? i['product']['name'] : (i['name'] ?? "Unknown");
       final int qty = (i['quantity'] ?? i['qty'] ?? 0) as int;
       final double price = double.tryParse((i['price'] ?? 0).toString()) ?? 0.0;
       final String? itemTime = i['createdAt'] ?? i['created_at'];
 
-      if (groupedDetails.containsKey(id)) {
-        groupedDetails[id]!['qty'] += qty;
+      final String groupKey = variantId != null ? "${id}_$variantId" : id;
+
+      if (groupedDetails.containsKey(groupKey)) {
+        groupedDetails[groupKey]!['qty'] += qty;
       } else {
-        groupedDetails[id] = {
+        groupedDetails[groupKey] = {
           "id": id,
-          "name": name,
+          "variant_id": variantId,
+          "variant_name": variantName,
+          "name": variantName != null ? "$name ($variantName)" : name,
           "qty": qty,
           "price": price,
           "timestamp": itemTime ?? timestamp,

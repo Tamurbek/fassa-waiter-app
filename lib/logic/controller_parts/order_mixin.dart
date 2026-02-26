@@ -5,7 +5,12 @@ import 'pos_controller_state.dart';
 import 'package:vibration/vibration.dart';
 
 mixin OrderMixin on POSControllerState {
-  double get subtotal => currentOrder.fold(0, (sum, item) => sum + ((item['item'] as FoodItem).price * (item['quantity'] as int)));
+  double get subtotal => currentOrder.fold(0, (sum, item) {
+    final foodItem = item['item'] as FoodItem;
+    final variant = item['variant'] as FoodVariant?;
+    final price = variant?.price ?? foodItem.price;
+    return sum + (price * (item['quantity'] as int));
+  });
   int get totalItems => currentOrder.fold(0, (sum, item) => sum + (item['quantity'] as int));
   bool get hasNewItems => currentOrder.any((item) => item['isNew'] == true && (item['quantity'] as int) > 0);
   bool get hasChanges => isOrderModified.value;
@@ -23,14 +28,19 @@ mixin OrderMixin on POSControllerState {
 
   double get total => subtotal + serviceFee;
 
-  void addToCart(FoodItem item) {
+  void addToCart(FoodItem item, {FoodVariant? variant}) {
     Vibration.vibrate(duration: 50, amplitude: 128);
-    int index = currentOrder.indexWhere((e) => e['item'].id == item.id && e['isNew'] == true);
+    int index = currentOrder.indexWhere((e) => 
+      e['item'].id == item.id && 
+      e['variant']?.id == variant?.id &&
+      e['isNew'] == true
+    );
     if (index != -1) {
       currentOrder[index]['quantity']++;
     } else {
       currentOrder.add({
         'item': item, 
+        'variant': variant,
         'quantity': 1, 
         'isNew': true,
         'timestamp': DateTime.now().toIso8601String(),
@@ -40,9 +50,13 @@ mixin OrderMixin on POSControllerState {
     checkIfModified();
   }
 
-  void decrementFromCart(FoodItem item) {
+  void decrementFromCart(FoodItem item, {FoodVariant? variant}) {
     Vibration.vibrate(duration: 30, amplitude: 64);
-    int index = currentOrder.indexWhere((e) => e['item'].id == item.id && e['isNew'] == true);
+    int index = currentOrder.indexWhere((e) => 
+      e['item'].id == item.id && 
+      e['variant']?.id == variant?.id &&
+      e['isNew'] == true
+    );
     if (index != -1) {
       if (currentOrder[index]['quantity'] > 1) {
         currentOrder[index]['quantity']--;
@@ -132,6 +146,7 @@ mixin OrderMixin on POSControllerState {
     }
     final currentJson = currentOrder.map((e) => {
       "id": (e['item'] as FoodItem).id,
+      "variant_id": (e['variant'] as FoodVariant?)?.id,
       "qty": e['quantity'],
     }).toList().toString();
     isOrderModified.value = currentJson != originalOrderJson;
@@ -233,8 +248,14 @@ mixin OrderMixin on POSControllerState {
     for (var d in details) {
       final item = catalog.firstWhereOrNull((f) => f.id == d['id'] || f.name == d['name']);
       if (item != null) {
+        FoodVariant? variant;
+        if (d['variant_id'] != null && item.hasVariants) {
+          variant = item.variants.firstWhereOrNull((v) => v.id == d['variant_id']);
+        }
+        
         currentOrder.add({
           'item': item, 
+          'variant': variant,
           'quantity': d['qty'],
           'sentQty': d['qty'],
           'isNew': false,
@@ -244,6 +265,7 @@ mixin OrderMixin on POSControllerState {
     }
     originalOrderJson = currentOrder.map((e) => {
       "id": (e['item'] as FoodItem).id,
+      "variant_id": (e['variant'] as FoodVariant?)?.id,
       "qty": e['quantity'],
     }).toList().toString();
     isOrderModified.value = false;

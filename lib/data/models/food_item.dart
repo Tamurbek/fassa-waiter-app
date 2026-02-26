@@ -1,3 +1,24 @@
+
+class FoodVariant {
+  final String id;
+  final String name;
+  final double price;
+
+  FoodVariant({required this.id, required this.name, required this.price});
+
+  factory FoodVariant.fromJson(Map<String, dynamic> json) => FoodVariant(
+    id: json['id']?.toString() ?? '',
+    name: json['name'] ?? '',
+    price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'price': price,
+  };
+}
+
 class FoodItem {
   final String id;
   final String name;
@@ -9,6 +30,8 @@ class FoodItem {
   final int timeEstimate; // in minutes
   final String preparationArea;
   final String? preparationAreaId;
+  final bool hasVariants;
+  final List<FoodVariant> variants;
 
   const FoodItem({
     required this.id,
@@ -21,6 +44,8 @@ class FoodItem {
     this.timeEstimate = 20,
     this.preparationArea = "Kitchen",
     this.preparationAreaId,
+    this.hasVariants = false,
+    this.variants = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -34,6 +59,8 @@ class FoodItem {
     'timeEstimate': timeEstimate,
     'preparationArea': preparationArea,
     'preparation_area_id': preparationAreaId,
+    'has_variants': hasVariants,
+    'variants': variants.map((v) => v.toJson()).toList(),
   };
 
   factory FoodItem.fromJson(Map<String, dynamic> json) {
@@ -48,6 +75,13 @@ class FoodItem {
         }
       }
 
+      var variantsList = <FoodVariant>[];
+      if (json['variants'] != null && json['variants'] is List) {
+        variantsList = (json['variants'] as List)
+            .map((v) => FoodVariant.fromJson(v))
+            .toList();
+      }
+
       return FoodItem(
         id: json['id']?.toString() ?? '',
         name: json['name'] ?? '',
@@ -59,6 +93,8 @@ class FoodItem {
         timeEstimate: int.tryParse(json['timeEstimate']?.toString() ?? '20') ?? 20,
         preparationArea: json['preparation_area'] ?? json['preparationArea'] ?? 'Kitchen',
         preparationAreaId: json['preparation_area_id']?.toString(),
+        hasVariants: json['has_variants'] ?? false,
+        variants: variantsList,
       );
     } catch (e) {
       print("Error parsing FoodItem: $e");
