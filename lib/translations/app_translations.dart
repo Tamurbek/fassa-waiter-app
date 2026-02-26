@@ -207,7 +207,6 @@ class AppTranslations extends Translations {
           'cash_label': 'cash',
           'piece': 'pcs',
           'today': 'Today',
-          'staff': 'Staff',
           'waiter_management': 'Staff Management',
           'login_subtitle': 'Welcome back! Please enter your details.',
           'email_address': 'Email address',
@@ -457,7 +456,6 @@ class AppTranslations extends Translations {
           'yes_cancel': 'Ha, bekor qil',
           'reprint_order': 'Qayta chop etish',
           'reprint_kitchen': 'Oshxonaga qayta yuborish',
-          'receipt_table_areas': 'Hisob-kitob hududlari',
           'receipt_area_selection_tip': 'Hisob va to\'lov cheklari chiqadigan hududlarni tanlang',
         },
         'ru_RU': {
