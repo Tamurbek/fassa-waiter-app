@@ -189,7 +189,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> createCategory(Map<String, dynamic> data) async {
     try {
-      final response = await _dio.post('/categories/', data: data);
+      final response = await _dio.post('/categories', data: data);
       return response.data;
     } catch (e) {
       rethrow;
@@ -225,7 +225,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> createProduct(Map<String, dynamic> data) async {
     try {
-      final response = await _dio.post('/products/', data: data);
+      final response = await _dio.post('/products', data: data);
       return response.data;
     } catch (e) {
       rethrow;
@@ -293,7 +293,7 @@ class ApiService {
         "file": await MultipartFile.fromFile(filePath, filename: fileName),
       });
 
-      final response = await _dio.post('/uploads/', data: formData);
+      final response = await _dio.post('/uploads', data: formData);
       return response.data['url'];
     } catch (e) {
       rethrow;
@@ -466,7 +466,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> createUser(Map<String, dynamic> data) async {
     try {
-      final response = await _dio.post('/users/', data: data);
+      final response = await _dio.post('/users', data: data);
       return response.data;
     } catch (e) {
       rethrow;
