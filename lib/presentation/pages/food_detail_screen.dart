@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../data/models/food_item.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/responsive.dart';
@@ -157,7 +158,7 @@ class FoodDetailScreen extends StatelessWidget {
             ],
           ),
         ),
-        Text("\$${item.price.toStringAsFixed(2)}", style: TextStyle(fontSize: isDesktop ? 34 : 28, fontWeight: FontWeight.bold, color: AppColors.primary)),
+        Text("${NumberFormat("#,###", "uz_UZ").format(item.price)} ${Get.find<POSController>().currencySymbol}", style: TextStyle(fontSize: isDesktop ? 34 : 28, fontWeight: FontWeight.bold, color: AppColors.primary)),
       ],
     );
   }
@@ -247,7 +248,7 @@ class FoodDetailScreen extends StatelessWidget {
           const SizedBox(width: 12),
           const Text("Add to Bill", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Spacer(),
-          Obx(() => Text("\$${(item.price * quantity.value).toStringAsFixed(2)}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+          Obx(() => Text("${NumberFormat("#,###", "uz_UZ").format(item.price * quantity.value)} ${Get.find<POSController>().currencySymbol}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
         ],
       ),
     );
