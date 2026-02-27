@@ -30,12 +30,15 @@ class ApiService {
       },
       onError: (DioException e, handler) {
         if (e.response?.statusCode == 401) {
-          final detail = e.response?.data?['detail'];
-          if (detail == "Qurilma o'zgargani sababli tizimdan chiqdingiz") {
+           // Any 401 error (expired, invalid, session deactivated) should trigger logout
+           // EXCEPT for PIN login attempts, which should just return the error to the UI
+           final bool isPinLogin = e.requestOptions.path.contains('/auth/login/pin');
+           
+           if (!isPinLogin) {
              try {
                 g.Get.find<logic.POSController>().logout(forced: true);
              } catch (_) {}
-          }
+           }
         }
         return handler.next(e);
       }
