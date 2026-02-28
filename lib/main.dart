@@ -29,25 +29,25 @@ void main() async {
   // Initialize Controller
   Get.put(POSController());
   
-  runApp(const FastFoodApp());
+  runApp(const FassaApp());
 }
 
-class FastFoodApp extends StatelessWidget {
-  const FastFoodApp({super.key});
+class FassaApp extends StatelessWidget {
+  const FassaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     final pos = Get.find<POSController>();
     // Get stored locale or default to uz_UZ
     final storage = GetStorage();
-    pos.restaurantName.value = storage.read('restaurant_name') ?? "Fayz";
+    pos.restaurantName.value = storage.read('restaurant_name') ?? "Fassa";
     String? storedLang = storage.read('lang');
     Locale initialLocale = storedLang != null 
         ? Locale(storedLang.split('_')[0], storedLang.split('_')[1])
         : const Locale('uz', 'UZ');
 
     return GetMaterialApp(
-      title: 'Fayz Waiter',
+      title: 'Fassa Waiter',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       translations: AppTranslations(),

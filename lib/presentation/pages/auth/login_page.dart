@@ -172,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                         _buildMockupLogo(),
                         const SizedBox(height: 48),
                         const Text(
-                          'Fayz',
+                          'Fassa',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 48,
@@ -357,7 +357,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       Text(
-                        '© 2024 FAYZ',
+                        '© 2026 FASSA',
                         style: TextStyle(
                           color: Colors.grey.shade400,
                           fontSize: 12,

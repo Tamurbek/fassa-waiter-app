@@ -1,0 +1,45 @@
+name: Build Waiter App (Android)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Android Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK & AppBundle
+        run: |
+          flutter build apk --release
+          flutter build appbundle --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fassa-waiter-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload AppBundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: fassa-waiter-android-aab
+          path: build/app/outputs/bundle/release/app-release.aab
