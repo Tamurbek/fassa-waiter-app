@@ -240,7 +240,14 @@ class CartScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(child: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary))),
+                      Expanded(
+                        child: Text(
+                          cartItem['variant'] != null 
+                              ? "${item.name} (${cartItem['variant'].name})" 
+                              : item.name, 
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary)
+                        )
+                      ),
                       if (cartItem['timestamp'] != null)
                         Text(
                           DateFormat('HH:mm').format(DateTime.parse(cartItem['timestamp'])),
@@ -249,7 +256,10 @@ class CartScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text("${NumberFormat("#,###", "uz_UZ").format(item.price)} ${pos.currencySymbol}", style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+                  Text(
+                    "${NumberFormat("#,###", "uz_UZ").format(cartItem['variant']?.price ?? item.price)} ${pos.currencySymbol}", 
+                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)
+                  ),
                 ],
               ),
             ),

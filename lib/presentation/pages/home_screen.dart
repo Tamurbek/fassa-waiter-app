@@ -339,12 +339,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   if (item.hasVariants && item.variants.isNotEmpty)
-                                    const Text("Variantlar",
-                                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF0EA5E9)))
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text("Variantlar",
+                                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 10, color: Color(0xFF0EA5E9))),
+                                        Text("${NumberFormat("#,###", "uz_UZ").format(item.variants.first.price)} ${pos.currencySymbol}", 
+                                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFFF9500))),
+                                      ],
+                                    )
                                   else
-                                    Text("${NumberFormat("#,###", "uz_UZ").format(item.price)}", 
-                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFFFF9500))),
-                                  Text(pos.currencySymbol, style: const TextStyle(fontSize: 10, color: Color(0xFFFF9500), fontWeight: FontWeight.bold)),
+                                    Text("${NumberFormat("#,###", "uz_UZ").format(item.price)} ${pos.currencySymbol}", 
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFFFF9500))),
                                 ],
                               ),
                             ),
