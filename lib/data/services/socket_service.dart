@@ -101,6 +101,10 @@ class SocketService {
     socket.emit('callWaiter', data);
   }
 
+  void onForceLogoutUser(Function(dynamic) callback) {
+    socket.on('forceLogoutUser', (data) => callback(data));
+  }
+
   void disconnect() {
     socket.disconnect();
   }

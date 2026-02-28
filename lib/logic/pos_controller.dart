@@ -190,6 +190,17 @@ class POSController extends POSControllerState with
         );
       }
     });
+
+    socket.onForceLogoutUser((data) {
+      if (currentUser.value != null && 
+          currentUser.value!['id'].toString() == data['user_id'].toString() &&
+          currentUser.value!['session_id'] != null &&
+          currentUser.value!['session_id'].toString() != data['session_id'].toString()) {
+        Get.snackbar("Tizimdan chiqildi", "Sizning hisobingiz boshqa qurilmadan ochildi.",
+          backgroundColor: Colors.red, colorText: Colors.white, duration: const Duration(seconds: 5));
+        logout(forced: true);
+      }
+    });
   }
 
   Future<void> _playAlertSound() async {
