@@ -229,16 +229,16 @@ mixin UserAuthMixin on POSControllerState {
     currentOrder.clear();
 
     if (deviceRole.value == null) {
-      Get.offAllNamed('/login');
+      Get.offAllNamed('/welcome');
     } else if (forced) {
-       Get.offAllNamed('/login');
+       Get.offAllNamed('/welcome');
     } else {
       // For Waiter app, full logout means unlinking from cafe
       waiterCafeId.value = null;
       storage.remove('waiter_cafe_id');
       deviceRole.value = null;
       storage.remove('device_role');
-      Get.offAllNamed('/'); // This will trigger _getInitialScreen logic and show QRScannerPage
+      Get.offAllNamed('/welcome');
     }
   }
 
