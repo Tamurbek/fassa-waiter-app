@@ -94,9 +94,6 @@ mixin PrinterMixin on POSControllerState {
             final Map<String, int> previouslyPrinted = previouslyPrintedRaw != null 
                 ? Map<String, int>.from(previouslyPrintedRaw) : {};
             
-            List<dynamic> addedItems = [];
-            List<dynamic> cancelledItems = [];
-
             final areaItems = details.where((d) {
               final itemId = d['id']?.toString().trim();
               if (itemId == null) return false;
@@ -107,42 +104,68 @@ mixin PrinterMixin on POSControllerState {
             }).toList();
 
             if (areaItems.isNotEmpty || previouslyPrinted.isNotEmpty) {
+              // Group items by preparationAreaId
+              final Map<String, List<dynamic>> itemsByArea = {};
               for (var item in areaItems) {
-                final String pId = item['id'].toString();
-                final int currentQty = int.tryParse(item['qty'].toString()) ?? 0;
-                final int prevQty = previouslyPrinted[pId] ?? 0;
-                if (currentQty > prevQty) addedItems.add({...item, 'qty': currentQty - prevQty});
+                final product = products.firstWhereOrNull((p) => p.id.toString().trim() == item['id'].toString().trim());
+                final areaId = product?.preparationAreaId?.toString() ?? "unknown";
+                itemsByArea.putIfAbsent(areaId, () => []).add(item);
               }
 
-              if (previouslyPrinted.isNotEmpty) {
+              // Identify all unique areas that had items previously or have items now for this printer
+              final Set<String> allActiveAreaIds = {
+                ...itemsByArea.keys,
+                ...previouslyPrinted.keys.map((pId) {
+                  final product = products.firstWhereOrNull((p) => p.id.toString().trim() == pId.trim());
+                  return product?.preparationAreaId?.toString() ?? "unknown";
+                }).where((aId) => printer.preparationAreaIds.any((pAId) => pAId.trim() == aId.trim()))
+              };
+
+              bool jobPrintedOverall = false;
+
+              for (final areaId in allActiveAreaIds) {
+                final currentAreaItems = itemsByArea[areaId] ?? [];
+                
+                // Get area name from products
+                String areaName = "Oshxona";
+                final areaProduct = products.firstWhereOrNull((p) => p.preparationAreaId?.toString() == areaId);
+                if (areaProduct != null) areaName = areaProduct.preparationArea;
+
+                List<dynamic> addedItems = [];
+                List<dynamic> cancelledItems = [];
+
+                for (var item in currentAreaItems) {
+                  final String pId = item['id'].toString();
+                  final int currentQty = int.tryParse(item['qty'].toString()) ?? 0;
+                  final int prevQty = previouslyPrinted[pId] ?? 0;
+                  if (currentQty > prevQty) addedItems.add({...item, 'qty': currentQty - prevQty});
+                }
+
                 previouslyPrinted.forEach((pId, prevQty) {
                   final product = products.firstWhereOrNull((p) => p.id.toString().trim() == pId.trim());
-                  if (product != null && product.preparationAreaId != null) {
-                    final String prodAreaId = product.preparationAreaId.toString().trim();
-                    if (printer.preparationAreaIds.any((id) => id.trim() == prodAreaId)) {
-                      final currentItem = areaItems.firstWhereOrNull((i) => i['id'].toString() == pId);
-                      final int currentQty = currentItem != null ? (int.tryParse(currentItem['qty'].toString()) ?? 0) : 0;
-                      if (currentQty < prevQty) {
-                        cancelledItems.add({'id': pId, 'name': product.name, 'qty': prevQty - currentQty});
-                      }
+                  if (product != null && product.preparationAreaId?.toString() == areaId) {
+                    final currentItem = currentAreaItems.firstWhereOrNull((i) => i['id'].toString() == pId);
+                    final int currentQty = currentItem != null ? (int.tryParse(currentItem['qty'].toString()) ?? 0) : 0;
+                    if (currentQty < prevQty) {
+                      cancelledItems.add({'id': pId, 'name': product.name, 'qty': prevQty - currentQty});
                     }
                   }
                 });
+
+                if (addedItems.isNotEmpty) {
+                  success = await printerService.printKitchenTicket(printer, order, addedItems, title: areaName);
+                  if (success) { successPrinters.add("${printer.name} ($areaName)"); jobPrintedOverall = true; } 
+                  else failedPrinters.add("${printer.name} ($areaName)");
+                }
+                
+                if (cancelledItems.isNotEmpty) {
+                  success = await printerService.printCancellationTicket(printer, order, cancelledItems, title: "$areaName Bekor");
+                  if (success) { successPrinters.add("${printer.name} ($areaName Bekor)"); jobPrintedOverall = true; } 
+                  else failedPrinters.add("${printer.name} ($areaName Bekor xatosi)");
+                }
               }
 
-              bool jobPrinted = false;
-              if (addedItems.isNotEmpty) {
-                success = await printerService.printKitchenTicket(printer, order, addedItems);
-                if (success) { successPrinters.add("${printer.name} (Yangilar)"); jobPrinted = true; } 
-                else failedPrinters.add(printer.name);
-              }
-              if (cancelledItems.isNotEmpty) {
-                success = await printerService.printCancellationTicket(printer, order, cancelledItems);
-                if (success) { successPrinters.add("${printer.name} (Bekor)"); jobPrinted = true; } 
-                else failedPrinters.add("${printer.name} (Bekor xatosi)");
-              }
-
-              if (jobPrinted) {
+              if (jobPrintedOverall) {
                 final currentPrintedMap = Map<String, int>.from(printedKitchenQuantities[orderIdStr] ?? {});
                 for (var item in areaItems) {
                   currentPrintedMap[item['id'].toString()] = int.tryParse(item['qty'].toString()) ?? 0;
@@ -151,8 +174,8 @@ mixin PrinterMixin on POSControllerState {
                 storage.write('printed_kitchen_items', Map.from(printedKitchenQuantities));
               }
 
-              if (addedItems.isEmpty && cancelledItems.isEmpty) {
-                if (!shouldPrintCurrentReceipt) filteredPrinters.add(printer.name);
+              if (jobPrintedOverall == false && !shouldPrintCurrentReceipt) {
+                filteredPrinters.add(printer.name);
               }
             }
           }
