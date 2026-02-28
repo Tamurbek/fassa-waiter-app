@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
-        android:label="Fast Food Waiter"
+        android:label="Fassa Waiter"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
