@@ -435,7 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             Text("Hajmni tanlang:", style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
             const SizedBox(height: 16),
-            ...item.variants.map((variant) => GestureDetector(
+            ...item.variants.where((v) => v.isAvailable).map((variant) => GestureDetector(
               onTap: () {
                 pos.addToCart(item, variant: variant);
                 Navigator.pop(ctx);

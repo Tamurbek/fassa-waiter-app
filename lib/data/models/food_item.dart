@@ -3,19 +3,22 @@ class FoodVariant {
   final String id;
   final String name;
   final double price;
+  final bool isAvailable;
 
-  FoodVariant({required this.id, required this.name, required this.price});
+  FoodVariant({required this.id, required this.name, required this.price, this.isAvailable = true});
 
   factory FoodVariant.fromJson(Map<String, dynamic> json) => FoodVariant(
     id: json['id']?.toString() ?? '',
     name: json['name'] ?? '',
     price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+    isAvailable: json['is_available'] ?? true,
   );
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
     'price': price,
+    'is_available': isAvailable,
   };
 }
 
@@ -31,6 +34,7 @@ class FoodItem {
   final String preparationArea;
   final String? preparationAreaId;
   final bool hasVariants;
+  final bool isAvailable;
   final List<FoodVariant> variants;
 
   const FoodItem({
@@ -45,6 +49,7 @@ class FoodItem {
     this.preparationArea = "Kitchen",
     this.preparationAreaId,
     this.hasVariants = false,
+    this.isAvailable = true,
     this.variants = const [],
   });
 
@@ -60,6 +65,7 @@ class FoodItem {
     'preparationArea': preparationArea,
     'preparation_area_id': preparationAreaId,
     'has_variants': hasVariants,
+    'is_available': isAvailable,
     'variants': variants.map((v) => v.toJson()).toList(),
   };
 
@@ -94,6 +100,7 @@ class FoodItem {
         preparationArea: json['preparation_area'] ?? json['preparationArea'] ?? 'Kitchen',
         preparationAreaId: json['preparation_area_id']?.toString(),
         hasVariants: json['has_variants'] ?? false,
+        isAvailable: json['is_available'] ?? true,
         variants: variantsList,
       );
     } catch (e) {

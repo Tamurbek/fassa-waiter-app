@@ -44,9 +44,10 @@ abstract class POSControllerState extends GetxController {
   var users = <Map<String, dynamic>>[].obs;
 
   List<FoodItem> get filteredProducts {
-    var list = selectedCategory.value == "All"
+    var list = (selectedCategory.value == "All"
         ? products
-        : products.where((p) => p.category == selectedCategory.value).toList();
+        : products.where((p) => p.category == selectedCategory.value).toList())
+        .where((p) => p.isAvailable).toList();
 
     if (searchQuery.value.isNotEmpty) {
       final query = searchQuery.value.toLowerCase();
