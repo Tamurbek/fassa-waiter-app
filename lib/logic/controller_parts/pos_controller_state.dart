@@ -25,6 +25,7 @@ abstract class POSControllerState extends GetxController {
   var pinCode = RxnString();
   var isPinAuthenticated = false.obs;
   var isPrinting = false.obs;
+  var isSubmitting = false.obs;
   var deviceRole = RxnString(); // "ADMIN", "CASHIER", "WAITER"
   var waiterCafeId = RxnString(); // Used only for WAITER role
   var printedKitchenQuantities = <String, Map<String, int>>{}.obs; // "orderId": {"productId": qty}

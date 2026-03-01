@@ -43,6 +43,12 @@ mixin UserAuthMixin on POSControllerState {
     }
     
     if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+      // Request notification permission for background service
+      if (Platform.isAndroid) {
+        final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+      }
+
       sendLocationUpdate();
       if (Platform.isAndroid || Platform.isIOS) {
         final service = FlutterBackgroundService();

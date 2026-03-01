@@ -403,10 +403,11 @@ class CartScreen extends StatelessWidget {
               children: [
                 Expanded(
                   flex: 2,
-                  child: _buildActionButton(
+                  child: Obx(() => _buildActionButton(
                     label: pos.editingOrderId.value != null ? "Saqlash & Oshxonaga" : "Oshxonaga",
                     icon: Icons.soup_kitchen_rounded,
                     color: Colors.blue.shade600,
+                    loading: pos.isSubmitting.value,
                     onTap: () async {
                       if (pos.editingOrderId.value != null && !pos.isOrderModified.value) {
                          Get.snackbar("Eslatma", "O'zgarishlar yo'q", 
@@ -422,7 +423,7 @@ class CartScreen extends StatelessWidget {
                       }
                     },
                     sublabel: pos.hasNewItems ? "Yangi mahsulotlar" : (pos.isOrderModified.value ? "O'zgarishlar bor" : null),
-                  ),
+                  )),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -452,15 +453,16 @@ class CartScreen extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     flex: 1,
-                    child: _buildActionButton(
+                    child: Obx(() => _buildActionButton(
                       label: "To'lov",
                       icon: Icons.check_circle_rounded,
                       color: AppColors.primary,
+                      loading: pos.isSubmitting.value,
                       onTap: () async {
                         bool success = await pos.submitOrder(isPaid: true);
                         if (success) Get.offAll(() => const MainNavigationScreen());
                       },
-                    ),
+                    )),
                   ),
                 ],
               ],
@@ -477,9 +479,10 @@ class CartScreen extends StatelessWidget {
     required Color color,
     required VoidCallback onTap,
     String? sublabel,
+    bool loading = false,
   }) {
     return ElevatedButton(
-      onPressed: onTap,
+      onPressed: loading ? null : onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
@@ -487,16 +490,18 @@ class CartScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 22),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), textAlign: TextAlign.center),
-          if (sublabel != null)
-            Text(sublabel, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.normal, color: Colors.white70)),
-        ],
-      ),
+      child: loading 
+        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 22),
+              const SizedBox(height: 2),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), textAlign: TextAlign.center),
+              if (sublabel != null)
+                Text(sublabel, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.normal, color: Colors.white70)),
+            ],
+          ),
     );
   }
 }

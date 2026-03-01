@@ -212,8 +212,14 @@ class POSController extends POSControllerState with
   }
 
   Future<bool> submitOrder({bool isPaid = false}) async {
-    if (currentOrder.isEmpty) return false;
-    bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+    if (isSubmitting.value) return false;
+    if (currentOrder.isEmpty) {
+      Get.snackbar("Xato", "Savat bo'sh", backgroundColor: Colors.red, colorText: Colors.white);
+      return false;
+    }
+    isSubmitting.value = true;
+    try {
+      bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
     
     if (!isWithinGeofence.value && isWaiter && !isDesktop) {
       Get.snackbar("Xato", "Buyurtma berish uchun kafe hududida bo'lishingiz kerak.", 
@@ -284,20 +290,24 @@ class POSController extends POSControllerState with
       Get.snackbar("Xato", "Buyurtmani saqlashda xatolik yuz berdi: $e", 
           backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
       return false;
+    } finally {
+      isSubmitting.value = false;
     }
   }
 
   Future<bool> updateExistingOrder({bool isPaid = false}) async {
     if (editingOrderId.value == null) return false;
-    bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-    
-    if (!isWithinGeofence.value && isWaiter && !isDesktop) {
-      Get.snackbar("Xato", "O'zgarishlarni saqlash uchun kafe hududida bo'lishingiz kerak.", 
-          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
-      return false;
-    }
-    
+    if (isSubmitting.value) return false;
+    isSubmitting.value = true;
     try {
+      bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+      
+      if (!isWithinGeofence.value && isWaiter && !isDesktop) {
+        Get.snackbar("Xato", "O'zgarishlarni saqlash uchun kafe hududida bo'lishingiz kerak.", 
+            backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+        isSubmitting.value = false;
+        return false;
+      }
       final newStatus = isPaid ? "Completed" : "Preparing";
       List<Map<String, dynamic>> consolidatedList = [];
       List<Map<String, dynamic>> cancelledItems = [];
@@ -382,11 +392,16 @@ class POSController extends POSControllerState with
         saveAllOrders();
         return true;
       }
+      
+      Get.snackbar("Xatolik", "Buyurtma topilmadi. Iltimos, ma'lumotlarni yangilang.", 
+          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
       return false;
     } catch (e) { 
       Get.snackbar("Xato", "O'zgarishlarni saqlashda xatolik: $e", 
           backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
       return false; 
+    } finally {
+      isSubmitting.value = false;
     }
   }
 

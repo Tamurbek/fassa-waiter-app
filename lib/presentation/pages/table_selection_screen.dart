@@ -367,7 +367,8 @@ class _FloorPlanView extends StatelessWidget {
                         isOccupied: isOccupied,
                         isEditMode: pos.isEditMode.value,
                         lockedByUser: lockedByUser ?? servingWaiter,
-                        isLockedByOther: isLockedByOther || isServedByOther,
+                        isLockedByOther: isLockedByOther,
+                        isServedByOther: isServedByOther,
                         width: tableWidth,
                         height: tableHeight,
                         shape: tableShape,
@@ -441,6 +442,7 @@ class _TableWidget extends StatelessWidget {
   final bool isEditMode;
   final String? lockedByUser;
   final bool isLockedByOther;
+  final bool isServedByOther;
   final double width;
   final double height;
   final String shape;
@@ -451,6 +453,7 @@ class _TableWidget extends StatelessWidget {
     required this.isEditMode,
     this.lockedByUser,
     this.isLockedByOther = false,
+    this.isServedByOther = false,
     this.width = 80.0,
     this.height = 80.0,
     this.shape = "square",
@@ -464,14 +467,14 @@ class _TableWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: isLockedByOther 
             ? Colors.orange.withOpacity(0.1) 
-            : (isOccupied ? Colors.red.withOpacity(0.1) : (isEditMode ? Colors.blue.withOpacity(0.05) : AppColors.white)),
+            : (isServedByOther ? Colors.red.withOpacity(0.12) : (isOccupied ? Colors.red.withOpacity(0.08) : (isEditMode ? Colors.blue.withOpacity(0.05) : AppColors.white))),
         shape: shape == 'circle' ? BoxShape.circle : BoxShape.rectangle,
         borderRadius: shape == 'circle' ? null : BorderRadius.circular(20),
         border: Border.all(
           color: isEditMode 
               ? Colors.blue.withOpacity(0.5) 
-              : (isLockedByOther ? Colors.orange.withOpacity(0.5) : (isOccupied ? Colors.red.withOpacity(0.3) : Colors.grey.shade200)),
-          width: (isEditMode || isLockedByOther) ? 2 : 1,
+              : (isLockedByOther ? Colors.orange.withOpacity(0.5) : (isServedByOther ? Colors.red.withOpacity(0.5) : (isOccupied ? Colors.red.withOpacity(0.3) : Colors.grey.shade200))),
+          width: (isEditMode || isLockedByOther || isServedByOther) ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -485,10 +488,10 @@ class _TableWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            isEditMode ? Icons.drag_indicator : (isLockedByOther ? Icons.lock_clock_rounded : Icons.table_restaurant), 
+            isEditMode ? Icons.drag_indicator : (isLockedByOther ? Icons.lock_clock_rounded : (isServedByOther ? Icons.person_pin_rounded : Icons.table_restaurant)), 
             color: isEditMode 
                 ? Colors.blue 
-                : (isLockedByOther ? Colors.orange : (isOccupied ? Colors.red : AppColors.primary)),
+                : (isLockedByOther ? Colors.orange : (isServedByOther || isOccupied ? Colors.red : AppColors.primary)),
             size: 24,
           ),
           const SizedBox(height: 4),
@@ -497,18 +500,18 @@ class _TableWidget extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
-              color: isLockedByOther ? Colors.orange : (isOccupied ? Colors.red : AppColors.textPrimary),
+              color: isLockedByOther ? Colors.orange : (isServedByOther || isOccupied ? Colors.red : AppColors.textPrimary),
             ),
           ),
-          if (isLockedByOther)
+          if (isLockedByOther || isServedByOther)
             Text(
-              lockedByUser ?? "User",
-              style: const TextStyle(fontSize: 8, color: Colors.orange, fontWeight: FontWeight.bold),
+              lockedByUser ?? "",
+              style: TextStyle(fontSize: 8, color: isLockedByOther ? Colors.orange : Colors.red, fontWeight: FontWeight.bold),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             )
           else if (isOccupied && !isEditMode)
-            Text(
+             Text(
               "occupied".tr,
               style: const TextStyle(fontSize: 8, color: Colors.red),
             ),

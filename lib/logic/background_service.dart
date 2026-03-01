@@ -115,6 +115,7 @@ void onStart(ServiceInstance service) async {
       if (cafeId.isNotEmpty) {
         final socketService = SocketService();
         socketService.setCafeId(cafeId);
+        socketService.socket.connect();
         
         socketService.onWaiterCall((data) async {
           if (user['id']?.toString() == data['waiter_id']?.toString()) {
