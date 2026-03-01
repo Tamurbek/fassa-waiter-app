@@ -155,25 +155,32 @@ class _FloorPlanView extends StatelessWidget {
           final String tableId = "$location-$tableNum";
 
           return Obx(() {
-            final bool isOccupied = pos.allOrders.any((o) => 
+            final activeOrder = pos.allOrders.firstWhereOrNull((o) => 
               o['table'] == tableId && 
               !["Completed", "Cancelled"].contains(o['status'])
             );
-
+            final bool isOccupied = activeOrder != null;
+            final String? servingWaiter = activeOrder?['waiter_name'];
+            
             final String? lockedByUser = pos.lockedTables[tableId];
             final bool isLockedByMe = lockedByUser != null && lockedByUser == (pos.currentUser.value?['name'] ?? "User");
             final bool isLockedByOther = lockedByUser != null && !isLockedByMe;
 
+            // NEW: Check if this table is served by another waiter
+            final bool isServedByOther = isOccupied && 
+                                        servingWaiter != null && 
+                                        servingWaiter != (pos.currentUser.value?['name'] ?? "") &&
+                                        pos.isWaiter;
+
             return GestureDetector(
-              onTap: isLockedByOther ? () {
-                Get.snackbar("Xatolik", "Ushbu stolni hozirda $lockedByUser tahrirlamoqda", 
-                  backgroundColor: Colors.orange, colorText: Colors.white);
+              onTap: (isLockedByOther || isServedByOther) ? () {
+                final String reason = isLockedByOther 
+                    ? "Ushbu stolni hozirda $lockedByUser tahrirlamoqda"
+                    : "Ushbu stolga $servingWaiter xizmat ko'rsatmoqda";
+                Get.snackbar("Xatolik", reason, backgroundColor: Colors.orange, colorText: Colors.white);
               } : () {
                 if (isOccupied) {
-                  final order = pos.allOrders.firstWhereOrNull((o) => 
-                    o['table'] == tableId && 
-                    !["Completed", "Cancelled"].contains(o['status'])
-                  );
+                  final order = activeOrder;
                   if (order != null) {
                     if (order['status'] == "Bill Printed" && !(pos.isAdmin || pos.isCashier)) {
                       Get.snackbar("Xatolik", "Ushbu buyurtma cheki chiqarilgan (qulflangan)", 
@@ -197,8 +204,8 @@ class _FloorPlanView extends StatelessWidget {
                 tableNum: tableNum,
                 isOccupied: isOccupied,
                 isEditMode: false,
-                lockedByUser: lockedByUser,
-                isLockedByOther: isLockedByOther,
+                lockedByUser: lockedByUser ?? servingWaiter, // Show serving waiter if not actively locked
+                isLockedByOther: isLockedByOther || isServedByOther,
               ),
             );
           });
@@ -272,14 +279,21 @@ class _FloorPlanView extends StatelessWidget {
                   final double tableHeight = (props['height'] as num?)?.toDouble() ?? 80.0;
                   final String tableShape = props['shape']?.toString() ?? "square";
 
-                  final bool isOccupied = pos.allOrders.any((o) => 
+                  final activeOrder = pos.allOrders.firstWhereOrNull((o) => 
                     o['table'] == tableId && 
                     !["Completed", "Cancelled"].contains(o['status'])
                   );
+                  final bool isOccupied = activeOrder != null;
+                  final String? servingWaiter = activeOrder?['waiter_name'];
 
                   final String? lockedByUser = pos.lockedTables[tableId];
                   final bool isLockedByMe = lockedByUser != null && lockedByUser == (pos.currentUser.value?['name'] ?? "User");
                   final bool isLockedByOther = lockedByUser != null && !isLockedByMe;
+
+                  final bool isServedByOther = isOccupied && 
+                                              servingWaiter != null && 
+                                              servingWaiter != (pos.currentUser.value?['name'] ?? "") &&
+                                              pos.isWaiter;
 
                   return Positioned(
                     left: position['x']!,
@@ -295,15 +309,14 @@ class _FloorPlanView extends StatelessWidget {
                       onPanEnd: pos.isEditMode.value ? (_) {
                         pos.syncTablePositionWithBackend(tableId);
                       } : null,
-                      onTap: pos.isEditMode.value ? null : (isLockedByOther ? () {
-                        Get.snackbar("Xatolik", "Ushbu stolni hozirda $lockedByUser tahrirlamoqda", 
-                          backgroundColor: Colors.orange, colorText: Colors.white);
+                      onTap: pos.isEditMode.value ? null : (isLockedByOther || isServedByOther ? () {
+                        final String reason = isLockedByOther 
+                            ? "Ushbu stolni hozirda $lockedByUser tahrirlamoqda"
+                            : "Ushbu stolga $servingWaiter xizmat ko'rsatmoqda";
+                        Get.snackbar("Xatolik", reason, backgroundColor: Colors.orange, colorText: Colors.white);
                       } : () {
                         if (isOccupied) {
-                          final order = pos.allOrders.firstWhereOrNull((o) => 
-                            o['table'] == tableId && 
-                            !["Completed", "Cancelled"].contains(o['status'])
-                          );
+                          final order = activeOrder;
                           if (order != null) {
                             if (order['status'] == "Bill Printed" && !(pos.isAdmin || pos.isCashier)) {
                               Get.snackbar("Xatolik", "Ushbu buyurtma cheki chiqarilgan (qulflangan)", 
@@ -321,7 +334,7 @@ class _FloorPlanView extends StatelessWidget {
                               backgroundColor: Colors.red, colorText: Colors.white);
                             return;
                           }
-
+    
                           pos.setTable(tableId);
                           if (pos.isAdmin || pos.isCashier) {
                             pos.showWaiterSelectionDialog(tableId, () {
@@ -337,8 +350,8 @@ class _FloorPlanView extends StatelessWidget {
                         tableNum: tableNum,
                         isOccupied: isOccupied,
                         isEditMode: pos.isEditMode.value,
-                        lockedByUser: lockedByUser,
-                        isLockedByOther: isLockedByOther,
+                        lockedByUser: lockedByUser ?? servingWaiter,
+                        isLockedByOther: isLockedByOther || isServedByOther,
                         width: tableWidth,
                         height: tableHeight,
                         shape: tableShape,
