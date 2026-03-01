@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: TextField(
                     controller: _searchController,
-                    autoFocus: true,
+                    autofocus: true,
                     onChanged: (val) => pos.searchQuery.value = val,
                     decoration: InputDecoration(
                       hintText: 'search_hint'.tr,
