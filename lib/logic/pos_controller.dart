@@ -224,6 +224,7 @@ class POSController extends POSControllerState with
       if (!isWithinGeofence.value && isWaiter && !isDesktop) {
         Get.snackbar("Xato", "Buyurtma berish uchun kafe hududida bo'lishingiz kerak.", 
             backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+        isSubmitting.value = false;
         return false;
       }
 
@@ -296,8 +297,6 @@ class POSController extends POSControllerState with
 
   Future<bool> updateExistingOrder({bool isPaid = false}) async {
     if (editingOrderId.value == null) return false;
-    if (isSubmitting.value) return false;
-    isSubmitting.value = true;
     try {
       bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
       
@@ -313,6 +312,8 @@ class POSController extends POSControllerState with
       final Map<String, Map<String, dynamic>> grouped = {};
       final Map<String, int> totalSentQty = {};
 
+      final Map<String, String> groupKeyToName = {};
+
       for (var e in currentOrder) {
         final item = e['item'] as FoodItem;
         final FoodVariant? variant = e['variant'] as FoodVariant?;
@@ -322,6 +323,7 @@ class POSController extends POSControllerState with
         final int qty = e['quantity'];
         final int sentQty = e['sentQty'] ?? 0;
 
+        groupKeyToName[groupKey] = variant != null ? "${item.name} (${variant.name})" : item.name;
         totalSentQty[groupKey] = (totalSentQty[groupKey] ?? 0) + sentQty;
 
         if (qty > 0) {
@@ -346,13 +348,12 @@ class POSController extends POSControllerState with
       consolidatedList = grouped.values.toList();
 
       // track cancellations for receipt display
-      totalSentQty.forEach((id, sentQty) {
-        final int currentQty = grouped[id]?['qty'] ?? 0;
+      totalSentQty.forEach((groupKey, sentQty) {
+        final int currentQty = grouped[groupKey]?['qty'] ?? 0;
         if (currentQty < sentQty) {
-          final item = currentOrder.firstWhere((e) => (e['item'] as FoodItem).id.toString() == id)['item'] as FoodItem;
           cancelledItems.add({
-            "id": id,
-            "name": item.name,
+            "id": groupKey,
+            "name": groupKeyToName[groupKey] ?? "Unknown",
             "qty": sentQty - currentQty,
           });
         }
@@ -399,8 +400,6 @@ class POSController extends POSControllerState with
       Get.snackbar("Xato", "O'zgarishlarni saqlashda xatolik: $e", 
           backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
       return false; 
-    } finally {
-      isSubmitting.value = false;
     }
   }
 
@@ -418,6 +417,10 @@ class POSController extends POSControllerState with
         return;
       }
     }
+    
+    editingOrderId.value = null; // Ensure we're not in edit mode for a new table
+    isOrderModified.value = false;
+    currentOrder.clear(); // Clear any previous cart content
     
     if (selectedTable.value.isNotEmpty) socket.emitTableUnlock(selectedTable.value);
     selectedTable.value = table;
