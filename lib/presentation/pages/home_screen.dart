@@ -20,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
 
   @override
   void dispose() {
@@ -82,98 +83,149 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTopBar(POSController pos, BuildContext context) {
     final bool isMobile = Responsive.isMobile(context);
+    
     return Container(
       padding: EdgeInsets.fromLTRB(
-        isMobile ? 24 : 40, 
-        MediaQuery.of(context).padding.top + 16, 
-        isMobile ? 24 : 40, 
-        16
+        isMobile ? 16 : 40, 
+        MediaQuery.of(context).padding.top + 12, 
+        isMobile ? 16 : 40, 
+        12
       ),
-      child: Row(
-        children: [
-          if (Navigator.canPop(context)) ...[
-            GestureDetector(
-              onTap: () {
-                pos.clearCurrentOrder();
-                Get.back();
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF9500),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFF9500).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+      child: _isSearching && isMobile
+        ? Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchController.clear();
+                    pos.searchQuery.value = "";
+                  });
+                },
+              ),
+              Expanded(
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    autoFocus: true,
+                    onChanged: (val) => pos.searchQuery.value = val,
+                    decoration: InputDecoration(
+                      hintText: 'search_hint'.tr,
+                      hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 18),
+                      suffixIcon: _searchController.text.isNotEmpty 
+                        ? IconButton(
+                            icon: const Icon(Icons.cancel_rounded, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              pos.searchQuery.value = "";
+                            },
+                          ) 
+                        : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
-                  ],
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      "back".tr,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+              ),
+            ],
+          )
+        : Row(
+            children: [
+              if (Navigator.canPop(context)) ...[
+                GestureDetector(
+                  onTap: () {
+                    pos.clearCurrentOrder();
+                    Get.back();
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF9500),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF9500).withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 14),
+                        const SizedBox(width: 6),
+                        Text(
+                          "back".tr,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              
+              if (isMobile) 
+                const Spacer()
+              else ...[
+                Obx(() => Text(
+                  pos.restaurantName.value.isEmpty ? "FASSA" : pos.restaurantName.value.toUpperCase(),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFFF9500), letterSpacing: -0.5),
+                )),
+                const SizedBox(width: 32),
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) => pos.searchQuery.value = val,
+                      decoration: InputDecoration(
+                        hintText: 'search_hint'.tr,
+                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13, fontWeight: FontWeight.w500),
+                        prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
+                        suffixIcon: Obx(() => pos.searchQuery.value.isNotEmpty 
+                          ? IconButton(
+                              icon: const Icon(Icons.cancel_rounded, size: 20, color: Color(0xFF9CA3AF)),
+                              onPressed: () {
+                                _searchController.clear();
+                                pos.searchQuery.value = "";
+                              },
+                            ) 
+                          : const SizedBox.shrink()),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-          if (!isMobile) ...[
-            Obx(() => Text(
-              pos.restaurantName.value.isEmpty ? "FAST FOOD PRO" : pos.restaurantName.value.toUpperCase(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFFF9500), letterSpacing: -0.5),
-            )),
-            const SizedBox(width: 40),
-          ],
-          Expanded(
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Obx(() => TextField(
-                controller: _searchController,
-                onChanged: (val) => pos.searchQuery.value = val,
-                decoration: InputDecoration(
-                  hintText: 'search_hint'.tr,
-                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13, fontWeight: FontWeight.w500),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
-                  suffixIcon: pos.searchQuery.value.isNotEmpty 
-                    ? IconButton(
-                        icon: const Icon(Icons.cancel_rounded, size: 20, color: Color(0xFF9CA3AF)),
-                        onPressed: () {
-                          _searchController.clear();
-                          pos.searchQuery.value = "";
-                        },
-                      ) 
-                    : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
-              )),
-            ),
+                const SizedBox(width: 16),
+              ],
+
+              if (isMobile) ...[
+                _buildTopIcon(Icons.search, onTap: () => setState(() => _isSearching = true)),
+                const SizedBox(width: 8),
+              ],
+              _buildTopIcon(Icons.notifications_outlined),
+              const SizedBox(width: 8),
+              _buildTopIcon(Icons.lock_rounded, onTap: () => pos.lockTerminal()),
+              const SizedBox(width: 8),
+              _buildTopIcon(Icons.refresh_rounded, onTap: () => pos.refreshData()),
+              const SizedBox(width: 8),
+              _buildTopIcon(Icons.settings_outlined, onTap: () => Get.toNamed('/settings')),
+            ],
           ),
-          const SizedBox(width: 16),
-          _buildTopIcon(Icons.notifications_outlined),
-          const SizedBox(width: 12),
-          _buildTopIcon(Icons.lock_rounded, onTap: () => pos.lockTerminal()),
-          const SizedBox(width: 12),
-          _buildTopIcon(Icons.refresh_rounded, onTap: () => pos.refreshData()),
-          const SizedBox(width: 12),
-          _buildTopIcon(Icons.settings_outlined, onTap: () => Get.toNamed('/settings')),
-        ],
-      ),
     );
   }
 
@@ -226,8 +278,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFFF9500) : const Color(0xFFF3F4F6),
+                  color: isSelected ? const Color(0xFFFF9500) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isSelected ? Colors.transparent : Colors.grey.shade200),
+                  boxShadow: isSelected ? [BoxShadow(color: const Color(0xFFFF9500).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
                 ),
                 child: Row(
                   children: [
@@ -1030,8 +1084,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: () async {
+              Obx(() => ElevatedButton(
+                onPressed: pos.isSubmitting.value ? null : () async {
                   if (!pos.isOrderModified.value) {
                     Get.snackbar("Eslatma", "Saqlash uchun o'zgarishlar kiritilmadi", 
                       backgroundColor: Colors.orange, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
@@ -1042,17 +1096,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     Get.offAll(() => const MainNavigationScreen());
                   }
                 },
-                icon: const Icon(Icons.soup_kitchen_rounded, size: 20),
-                label: const Text("Oshxonaga"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFF9500),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
-                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  disabledBackgroundColor: const Color(0xFFFF9500).withOpacity(0.6),
                 ),
-              ),
+                child: pos.isSubmitting.value 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.soup_kitchen_rounded, size: 20),
+                        const SizedBox(width: 8),
+                        const Text("Oshxonaga", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      ],
+                    ),
+              )),
             ],
           ),
         ),
