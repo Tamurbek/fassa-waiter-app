@@ -469,10 +469,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCounterControl(FoodItem item, int qty, POSController pos) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -480,21 +480,22 @@ class _HomeScreenState extends State<HomeScreen> {
           GestureDetector(
             onTap: () => pos.decrementFromCart(item),
             child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.remove, size: 14, color: Color(0xFF1A1A1A)),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.remove, size: 18, color: Color(0xFF1A1A1A)),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text("$qty", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Container(
+            constraints: const BoxConstraints(minWidth: 32),
+            alignment: Alignment.center,
+            child: Text("$qty", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           ),
           GestureDetector(
             onTap: () => pos.addToCart(item),
             child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.add, size: 14, color: Colors.white),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.add, size: 18, color: Colors.white),
             ),
           ),
         ],
@@ -701,15 +702,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildVerticalCounter(int index, int qty, POSController pos, bool isCancelled) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), border: Border.all(color: const Color(0xFFEDF0F5))),
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        borderRadius: BorderRadius.circular(30), 
+        border: Border.all(color: const Color(0xFFEDF0F5), width: 1.5)
+      ),
       child: Column(
         children: [
           _buildCounterBtn(Icons.add, () => pos.updateQuantity(index, 1)),
           GestureDetector(
             onTap: () => pos.showQuantityDialog(index),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text("$qty", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isCancelled ? Colors.red : const Color(0xFF1A1A1A))),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text("$qty", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: isCancelled ? Colors.red : const Color(0xFF1A1A1A))),
             ),
           ),
           _buildCounterBtn(Icons.remove, () => pos.updateQuantity(index, -1)),
@@ -722,8 +727,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Icon(icon, size: 14, color: const Color(0xFF9CA3AF)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Icon(icon, size: 18, color: const Color(0xFF9CA3AF)),
       ),
     );
   }
