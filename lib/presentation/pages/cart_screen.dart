@@ -386,21 +386,24 @@ class CartScreen extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: _buildActionButton(
-                    label: pos.isOrderModified.value ? "Saqlash & Send" : "Oshxonaga",
+                    label: pos.editingOrderId.value != null ? "Saqlash & Oshxonaga" : "Oshxonaga",
                     icon: Icons.soup_kitchen_rounded,
                     color: Colors.blue.shade600,
                     onTap: () async {
-                      if (!pos.isOrderModified.value) {
-                        Get.snackbar("Eslatma", "O'zgarishlar yo'q", backgroundColor: Colors.orange, colorText: Colors.white);
-                        return;
+                      if (pos.editingOrderId.value != null && !pos.isOrderModified.value) {
+                         Get.snackbar("Eslatma", "O'zgarishlar yo'q", 
+                            backgroundColor: Colors.orange, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+                         return;
                       }
+                      
                       bool success = await pos.submitOrder(isPaid: false);
                       if (success) {
-                        Get.snackbar("Saqlandi", "Buyurtma oshxonaga yuborildi", backgroundColor: Colors.green, colorText: Colors.white);
+                        Get.snackbar("Muvaffaqiyatli", "Buyurtma oshxonaga yuborildi", 
+                            backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
                         Get.offAll(() => const MainNavigationScreen());
                       }
                     },
-                    sublabel: pos.hasNewItems ? "Yangi mahsulot bor" : null,
+                    sublabel: pos.hasNewItems ? "Yangi mahsulotlar" : (pos.isOrderModified.value ? "O'zgarishlar bor" : null),
                   ),
                 ),
                 const SizedBox(width: 8),

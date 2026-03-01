@@ -214,7 +214,12 @@ class POSController extends POSControllerState with
   Future<bool> submitOrder({bool isPaid = false}) async {
     if (currentOrder.isEmpty) return false;
     bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-    if (!isWithinGeofence.value && isWaiter && !isDesktop) return false;
+    
+    if (!isWithinGeofence.value && isWaiter && !isDesktop) {
+      Get.snackbar("Xato", "Buyurtma berish uchun kafe hududida bo'lishingiz kerak.", 
+          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
 
     if (editingOrderId.value != null) return await updateExistingOrder(isPaid: isPaid);
 
@@ -276,6 +281,8 @@ class POSController extends POSControllerState with
       saveAllOrders();
       return true;
     } catch (e) {
+      Get.snackbar("Xato", "Buyurtmani saqlashda xatolik yuz berdi: $e", 
+          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
@@ -283,7 +290,12 @@ class POSController extends POSControllerState with
   Future<bool> updateExistingOrder({bool isPaid = false}) async {
     if (editingOrderId.value == null) return false;
     bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-    if (!isWithinGeofence.value && isWaiter && !isDesktop) return false;
+    
+    if (!isWithinGeofence.value && isWaiter && !isDesktop) {
+      Get.snackbar("Xato", "O'zgarishlarni saqlash uchun kafe hududida bo'lishingiz kerak.", 
+          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
     
     try {
       final newStatus = isPaid ? "Completed" : "Preparing";
@@ -357,13 +369,13 @@ class POSController extends POSControllerState with
         allOrders[index] = orderToPrint;
 
       
-      final orderId = editingOrderId.value?.toString();
-      if (orderId != null) {
-        _processedPrintIds[orderId] = DateTime.now();
-      }
+        final orderId = editingOrderId.value?.toString();
+        if (orderId != null) {
+          _processedPrintIds[orderId] = DateTime.now();
+        }
 
-      await printOrder(orderToPrint, isKitchenOnly: !isPaid, 
-          receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
+        await printOrder(orderToPrint, isKitchenOnly: !isPaid, 
+            receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
 
         allOrders.refresh();
         clearCurrentOrder();
@@ -371,11 +383,28 @@ class POSController extends POSControllerState with
         return true;
       }
       return false;
-    } catch (e) { return false; }
+    } catch (e) { 
+      Get.snackbar("Xato", "O'zgarishlarni saqlashda xatolik: $e", 
+          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+      return false; 
+    }
   }
 
-  void setMode(String mode) => currentMode.value = mode;
   void setTable(String table) {
+    if (table.isNotEmpty) {
+      bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+      if (!isWithinGeofence.value && isWaiter && !isDesktop) {
+        Get.snackbar(
+          "Hudud cheklovi", 
+          "Stol tanlash uchun kafe hududida bo'lishingiz kerak.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+    }
+    
     if (selectedTable.value.isNotEmpty) socket.emitTableUnlock(selectedTable.value);
     selectedTable.value = table;
     if (table.isNotEmpty) socket.emitTableLock(table, currentUser.value?['name'] ?? "User");

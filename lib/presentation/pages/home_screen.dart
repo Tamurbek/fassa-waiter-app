@@ -58,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: Column(
                   children: [
+                    _buildGeofenceBanner(pos),
                     _buildTopBar(pos, context),
                     _buildCategories(pos, context),
                     Expanded(
@@ -414,8 +415,9 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).padding.bottom + 24),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -435,34 +437,113 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             Text("Hajmni tanlang:", style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
             const SizedBox(height: 16),
-            ...item.variants.where((v) => v.isAvailable).map((variant) => GestureDetector(
-              onTap: () {
-                pos.addToCart(item, variant: variant);
-                Navigator.pop(ctx);
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFF9500).withOpacity(0.3)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(variant.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text(
-                      "${NumberFormat('#,###', 'uz_UZ').format(variant.price)} ${pos.currencySymbol}",
-                      style: const TextStyle(color: Color(0xFFFF9500), fontWeight: FontWeight.w900, fontSize: 16),
-                    ),
-                  ],
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: item.variants.where((v) => v.isAvailable).map((variant) => Obx(() {
+                    final int qty = pos.currentOrder
+                        .where((e) => (e['item'] as FoodItem).id == item.id && 
+                                     e['variant']?.id == variant.id && 
+                                     e['isNew'] == true)
+                        .fold(0, (sum, e) => sum + (e['quantity'] as int));
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: qty > 0 ? const Color(0xFFFFF7ED) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: qty > 0 ? const Color(0xFFFF9500).withOpacity(0.5) : const Color(0xFFEDF0F5),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(variant.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                Text(
+                                  "${NumberFormat('#,###', 'uz_UZ').format(variant.price)} ${pos.currencySymbol}",
+                                  style: const TextStyle(color: Color(0xFFFF9500), fontWeight: FontWeight.w900, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _buildCounterForVariant(item, variant, qty, pos),
+                        ],
+                      ),
+                    );
+                  })).toList(),
                 ),
               ),
-            )),
-            const SizedBox(height: 8),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF9500),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                child: const Text("Tayyor", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCounterForVariant(FoodItem item, dynamic variant, int qty, POSController pos) {
+    if (qty == 0) {
+      return GestureDetector(
+        onTap: () => pos.addToCart(item, variant: variant),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: const Color(0xFFE0F2FE), borderRadius: BorderRadius.circular(12)),
+          child: const Icon(Icons.add, color: Color(0xFF0EA5E9), size: 20),
+        ),
+      );
+    }
+    
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () => pos.decrementFromCart(item, variant: variant),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.remove, size: 18, color: Color(0xFF1A1A1A)),
+            ),
+          ),
+          Container(
+            constraints: const BoxConstraints(minWidth: 32),
+            alignment: Alignment.center,
+            child: Text("$qty", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          ),
+          GestureDetector(
+            onTap: () => pos.addToCart(item, variant: variant),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.add, size: 18, color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -764,9 +845,9 @@ class _HomeScreenState extends State<HomeScreen> {
               // Kitchen Print (Always visible)
               Expanded(
                 child: _buildActionBtn(Icons.soup_kitchen_rounded, "Oshxona", const Color(0xFF3B82F6), () async {
-                  if (!pos.hasNewItems) {
-                    Get.snackbar("Eslatma", "Oshxonaga yuborish uchun yangi mahsulot qo'shilmadi", 
-                      backgroundColor: Colors.orange, colorText: Colors.white);
+                  if (!pos.isOrderModified.value) {
+                    Get.snackbar("Eslatma", "Saqlash uchun o'zgarishlar kiritilmadi", 
+                      backgroundColor: Colors.orange, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
                     return;
                   }
                   bool success = await pos.submitOrder(isPaid: false);
@@ -948,9 +1029,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               ElevatedButton.icon(
                 onPressed: () async {
-                  if (!pos.hasNewItems) {
-                    Get.snackbar("Eslatma", "Oshxonaga yuborish uchun yangi mahsulot qo'shilmadi", 
-                      backgroundColor: Colors.orange, colorText: Colors.white);
+                  if (!pos.isOrderModified.value) {
+                    Get.snackbar("Eslatma", "Saqlash uchun o'zgarishlar kiritilmadi", 
+                      backgroundColor: Colors.orange, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
                     return;
                   }
                   bool success = await pos.submitOrder(isPaid: false);
@@ -974,6 +1055,28 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildGeofenceBanner(POSController pos) {
+    return Obx(() {
+      if (pos.isWithinGeofence.value || !pos.isWaiter) return const SizedBox.shrink();
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        color: Colors.red,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.location_off, color: Colors.white, size: 16),
+            SizedBox(width: 8),
+            Text(
+              "Hozirda hududdan tashqaridasiz!",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 

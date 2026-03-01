@@ -28,7 +28,24 @@ mixin OrderMixin on POSControllerState {
 
   double get total => subtotal + serviceFee;
 
+  bool _checkGeofence() {
+    bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+    if (!isWithinGeofence.value && isWaiter && !isDesktop) {
+      Get.snackbar(
+        "Hudud cheklovi", 
+        "Siz kafe hududidan tashqaridasiz. Amallar bajarish cheklangan.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        icon: const Icon(Icons.location_off, color: Colors.white),
+      );
+      return false;
+    }
+    return true;
+  }
+
   void addToCart(FoodItem item, {FoodVariant? variant}) {
+    if (!_checkGeofence()) return;
     Vibration.vibrate(duration: 50, amplitude: 128);
     int index = currentOrder.indexWhere((e) => 
       e['item'].id == item.id && 
@@ -51,6 +68,7 @@ mixin OrderMixin on POSControllerState {
   }
 
   void decrementFromCart(FoodItem item, {FoodVariant? variant}) {
+    if (!_checkGeofence()) return;
     Vibration.vibrate(duration: 30, amplitude: 64);
     int index = currentOrder.indexWhere((e) => 
       e['item'].id == item.id && 
@@ -93,6 +111,7 @@ mixin OrderMixin on POSControllerState {
   }
 
   void updateQuantity(int index, int delta) {
+    if (!_checkGeofence()) return;
     int currentQty = currentOrder[index]['quantity'];
     int newQty = currentQty + delta;
     
