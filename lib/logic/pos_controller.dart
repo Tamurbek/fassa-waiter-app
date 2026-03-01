@@ -31,6 +31,7 @@ class POSController extends POSControllerState with
   void onInit() {
     super.onInit();
     _loadLocalData();
+    initConnectivityListener();
     fetchBackendData();
     _setupSocketListenersDetailed();
     updateService.checkForUpdate();
@@ -120,6 +121,34 @@ class POSController extends POSControllerState with
     if (currentUser.value != null) {
       socket.setCafeId(cafeId);
     }
+
+    // Load Printer Settings
+    printerPaperSize.value = storage.read('printer_paper_size') ?? "80mm";
+    autoPrintReceipt.value = storage.read('auto_print_receipt') ?? false;
+    enableKitchenPrint.value = storage.read('enable_kitchen_print') ?? true;
+    enableBillPrint.value = storage.read('enable_bill_print') ?? true;
+    enablePaymentPrint.value = storage.read('enable_payment_print') ?? true;
+
+    // Load Feature Flags
+    isGeofencingEnabled.value = storage.read('is_geofencing_enabled') ?? true;
+    isShiftBroadcastEnabled.value = storage.read('is_shift_broadcast_enabled') ?? true;
+    isTableManagementEnabled.value = storage.read('is_table_management_enabled') ?? true;
+    isKitchenPrintEnabled.value = storage.read('is_kitchen_print_enabled') ?? true;
+    isSubscriptionEnforced.value = storage.read('is_subscription_enforced') ?? true;
+    isQrLoginEnabled.value = storage.read('is_qr_login_enabled') ?? true;
+    isOfflineSyncEnabled.value = storage.read('is_offline_sync_enabled') ?? true;
+
+    // Load Cafe Settings (Offline/First-load)
+    restaurantName.value = storage.read('restaurant_name') ?? "";
+    restaurantAddress.value = storage.read('restaurant_address') ?? "";
+    restaurantPhone.value = storage.read('restaurant_phone') ?? "";
+    currency.value = storage.read('currency') ?? "UZS";
+    serviceFeeDineIn.value = (storage.read('service_fee_dine_in') as num?)?.toDouble() ?? 10.0;
+    serviceFeeTakeaway.value = (storage.read('service_fee_takeaway') as num?)?.toDouble() ?? 0.0;
+    serviceFeeDelivery.value = (storage.read('service_fee_delivery') as num?)?.toDouble() ?? 3000.0;
+    receiptHeader.value = storage.read('receipt_header') ?? "";
+    receiptFooter.value = storage.read('receipt_footer') ?? "Xaridingiz uchun rahmat!";
+    showLogo.value = storage.read('show_logo') ?? true;
   }
 
   void _setupSocketListenersDetailed() {
@@ -230,12 +259,21 @@ class POSController extends POSControllerState with
 
       if (editingOrderId.value != null) return await updateExistingOrder(isPaid: isPaid);
 
+      if (!isOnline.value && !isOfflineSyncEnabled.value) {
+        Get.snackbar("Xato", "Internetingiz o'chgan va oflayn rejim ruxsat etilmagan. Buyurtmani faqat onlayn holatda berish mumkin.",
+            backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+        return false;
+      }
+
       final orderData = {
+        "id": uuid.v4(), // Client-side ID for offline sync
         "table_number": currentMode.value == "Dine-in" ? selectedTable.value : null,
         "type": currentMode.value.toUpperCase().replaceAll("-", "_"),
         "is_paid": isPaid,
         "waiter_name": selectedWaiter.value ?? currentUser.value?['name'],
         "cafe_id": cafeId,
+        "createdAt": DateTime.now().toIso8601String(),
+        "total_amount": total,
         "items": () {
           final Map<String, Map<String, dynamic>> grouped = {};
           for (var e in currentOrder) {
@@ -263,28 +301,51 @@ class POSController extends POSControllerState with
         }(),
       };
 
-      final newOrder = await api.createOrder(orderData);
-      final normalized = normalizeOrder(newOrder);
-      
-      // Check if already added by socket to prevent duplicates
-      int index = allOrders.indexWhere((o) => o['id'].toString() == normalized['id'].toString());
-      if (index == -1) {
-        allOrders.insert(0, normalized);
+      if (isOnline.value) {
+        try {
+          // Perform Optimistic UI Update first if we think we are online
+          final normalized = normalizeOrder(orderData);
+          allOrders.insert(0, normalized);
+          allOrders.refresh();
+          saveAllOrders();
+
+          final newOrder = await api.createOrder(orderData);
+          int idx = allOrders.indexWhere((o) => o['id'] == normalized['id']);
+          if (idx != -1) {
+            allOrders[idx] = normalizeOrder(newOrder);
+            allOrders.refresh();
+            saveAllOrders();
+          }
+        } catch (e) {
+          print("Online order failed: $e");
+          if (isOfflineSyncEnabled.value) {
+            addToSyncQueue('CREATE_ORDER', orderData);
+          } else {
+            // Revert list if possible
+            allOrders.removeWhere((o) => o['id'] == orderData['id']);
+            allOrders.refresh();
+            saveAllOrders();
+            Get.snackbar("Xato", "Buyurtmani yuborishda xatolik yuz berdi. Offline rejim ochiq emas.",
+                backgroundColor: Colors.red, colorText: Colors.white);
+            return false;
+          }
+        }
       } else {
-        // Update existing if needed (though it should be the same)
-        allOrders[index] = normalized;
-      }
-      
-      final orderId = normalized['id']?.toString();
-      if (orderId != null) {
-        _processedPrintIds[orderId] = DateTime.now();
+        // We are strictly offline (and isOfflineSyncEnabled must be true to reach here)
+        final normalized = normalizeOrder(orderData);
+        allOrders.insert(0, normalized);
+        allOrders.refresh();
+        saveAllOrders();
+        
+        addToSyncQueue('CREATE_ORDER', orderData);
+        Get.snackbar("Oflayn", "Buyurtma saqlandi. Internet paydo bo'lishi bilan yuboriladi.", 
+          backgroundColor: Colors.blue, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
       }
 
       await printOrder(normalized, isKitchenOnly: !isPaid, 
           receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
 
       clearCurrentOrder();
-      saveAllOrders();
       return true;
     } catch (e) {
       Get.snackbar("Xato", "Buyurtmani saqlashda xatolik yuz berdi: $e", 
@@ -359,10 +420,25 @@ class POSController extends POSControllerState with
         }
       });
 
-      await api.updateOrderStatus(editingOrderId.value!, newStatus);
-      await api.updateOrder(editingOrderId.value!, {
+      consolidatedList = grouped.values.toList();
+
+      final payload = {
         "items": consolidatedList.map((i) => { "product_id": i["id"], "variant_id": i["variant_id"], "variant_name": i["variant_name"], "quantity": i["qty"], "price": i["price"] }).toList()
-      });
+      };
+
+      if (isOnline.value) {
+        try {
+          await api.updateOrderStatus(editingOrderId.value!, newStatus);
+          await api.updateOrder(editingOrderId.value!, payload);
+        } catch (e) {
+          print("Online update failed, task added to sync queue: $e");
+          if (!addToSyncQueue('UPDATE_STATUS', {'id': editingOrderId.value!, 'status': newStatus})) return false;
+          addToSyncQueue('UPDATE_ORDER', {'id': editingOrderId.value!, 'payload': payload});
+        }
+      } else {
+          if (!addToSyncQueue('UPDATE_STATUS', {'id': editingOrderId.value!, 'status': newStatus})) return false;
+          addToSyncQueue('UPDATE_ORDER', {'id': editingOrderId.value!, 'payload': payload});
+      }
       
       int index = allOrders.indexWhere((o) => o['id'].toString() == editingOrderId.value.toString());
       if (index != -1) {
@@ -378,7 +454,6 @@ class POSController extends POSControllerState with
         // Update allOrders with new details
         allOrders[index] = orderToPrint;
 
-      
         final orderId = editingOrderId.value?.toString();
         if (orderId != null) {
           _processedPrintIds[orderId] = DateTime.now();

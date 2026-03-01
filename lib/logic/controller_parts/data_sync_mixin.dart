@@ -4,10 +4,16 @@ import 'dart:async';
 import '../../data/models/food_item.dart';
 import '../../data/models/printer_model.dart';
 import '../../data/models/preparation_area_model.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'pos_controller_state.dart';
 
 mixin DataSyncMixin on POSControllerState {
   Future<void> refreshData({bool showMessage = true}) async {
+    if (!isOnline.value) {
+      if (showMessage) Get.snackbar("Oflayn", "Internet yo'q, yangilab bo'lmaydi", 
+        backgroundColor: Colors.orange, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     try {
       await fetchBackendData();
       if (showMessage) {
@@ -15,6 +21,139 @@ mixin DataSyncMixin on POSControllerState {
           backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2));
       }
     } catch (e) { print("Refresh error: $e"); }
+  }
+
+  void initConnectivityListener() {
+    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+      bool wasOffline = !isOnline.value;
+      isOnline.value = result != ConnectivityResult.none;
+      
+      _handleConnectionOverlay();
+
+      if (isOnline.value && wasOffline) {
+        Get.snackbar("Onlayn", "Internet tiklandi. Sinxronizatsiya boshlandi...", 
+          backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+        processSyncQueue();
+        refreshData(showMessage: false);
+      } else if (!isOnline.value) {
+        if (isOfflineSyncEnabled.value) {
+          Get.snackbar("Oflayn", "Siz oflayn rejimda ishlayapsiz. Ma'lumotlar saqlab qo'yiladi.", 
+            backgroundColor: Colors.orange, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+        } else {
+          Get.snackbar("Oflayn", "Internet uzildi. Offline rejim o'chirilgan.", 
+            backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+        }
+      }
+    });
+
+    // Check initial state
+    _handleConnectionOverlay();
+
+    // Load saved queue
+    var savedQueue = storage.read('sync_queue');
+    if (savedQueue != null) {
+      syncQueue.assignAll(List<Map<String, dynamic>>.from(savedQueue));
+      if (isOnline.value) processSyncQueue();
+    }
+  }
+
+  void _handleConnectionOverlay() {
+    if (!isOnline.value && !isOfflineSyncEnabled.value) {
+      if (!Get.isDialogOpen!) {
+        Get.dialog(
+          WillPopScope(
+            onWillPop: () async => false,
+            child: Material(
+              color: Colors.black54,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  margin: const EdgeInsets.symmetric(horizontal: 40),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 1)
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.signal_wifi_off, size: 64, color: Colors.red),
+                      const SizedBox(height: 24),
+                      const Text(
+                        "Internet yo'q",
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        "Admin tomonidan oflayn ishlash o'chirilgan. Ilovadan foydalanish uchun internetga ulaning.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 24),
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 12),
+                      const Text("Bog'lanish kutilmoqda...", style: TextStyle(fontStyle: FontStyle.italic)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          barrierDismissible: false,
+        );
+      }
+    } else {
+      if (Get.isDialogOpen!) {
+        // Only close if it's the connection dialog we opened.
+        // Actually, to be safe, we close if it's open and we are online.
+        Get.back(); 
+      }
+    }
+  }
+
+  bool addToSyncQueue(String type, Map<String, dynamic> data) {
+    if (!isOfflineSyncEnabled.value) {
+      Get.snackbar("Xato", "Offline ishlashga ruxsat yo'q. Internetni tekshiring.",
+        backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+    syncQueue.add({
+      'id': uuid.v4(),
+      'type': type,
+      'data': data,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+    storage.write('sync_queue', syncQueue.toList());
+    return true;
+  }
+
+  Future<void> processSyncQueue() async {
+    if (!isOnline.value || syncQueue.isEmpty) return;
+    
+    final List<Map<String, dynamic>> tasks = List.from(syncQueue);
+    for (var task in tasks) {
+      try {
+        if (task['type'] == 'CREATE_ORDER') {
+          await api.createOrder(task['data']);
+        } else if (task['type'] == 'UPDATE_ORDER') {
+          await api.updateOrder(task['data']['id'], task['data']['payload']);
+        } else if (task['type'] == 'UPDATE_STATUS') {
+          await api.updateOrderStatus(task['data']['id'], task['data']['status']);
+        }
+        
+        syncQueue.removeWhere((t) => t['id'] == task['id']);
+        storage.write('sync_queue', syncQueue.toList());
+      } catch (e) {
+        print("Sync task failed: $e");
+        // If it's a permanent error (like 400), maybe remove it, but for now we keep trying
+        if (e.toString().contains('400') || e.toString().contains('404')) {
+           syncQueue.removeWhere((t) => t['id'] == task['id']);
+           storage.write('sync_queue', syncQueue.toList());
+        }
+      }
+    }
   }
 
   Future<void> fetchBackendData() async {
@@ -45,6 +184,15 @@ mixin DataSyncMixin on POSControllerState {
           instagram.value = cafe['instagram'] ?? "";
           telegram.value = cafe['telegram'] ?? "";
           allowWaiterMobileOrders.value = cafe['allow_waiter_mobile_orders'] ?? true;
+
+          // Feature Flags
+          isGeofencingEnabled.value = cafe['is_geofencing_enabled'] ?? true;
+          isShiftBroadcastEnabled.value = cafe['is_shift_broadcast_enabled'] ?? true;
+          isTableManagementEnabled.value = cafe['is_table_management_enabled'] ?? true;
+          isKitchenPrintEnabled.value = cafe['is_kitchen_print_enabled'] ?? true;
+          isSubscriptionEnforced.value = cafe['is_subscription_enforced'] ?? true;
+          isQrLoginEnabled.value = cafe['is_qr_login_enabled'] ?? true;
+          isOfflineSyncEnabled.value = cafe['is_offline_sync_enabled'] ?? true;
           
           storage.write('restaurant_name', restaurantName.value);
           storage.write('restaurant_address', restaurantAddress.value);
@@ -66,6 +214,14 @@ mixin DataSyncMixin on POSControllerState {
           storage.write('instagram', instagram.value);
           storage.write('telegram', telegram.value);
           storage.write('allow_waiter_mobile_orders', allowWaiterMobileOrders.value);
+          
+          storage.write('is_geofencing_enabled', isGeofencingEnabled.value);
+          storage.write('is_shift_broadcast_enabled', isShiftBroadcastEnabled.value);
+          storage.write('is_table_management_enabled', isTableManagementEnabled.value);
+          storage.write('is_kitchen_print_enabled', isKitchenPrintEnabled.value);
+          storage.write('is_subscription_enforced', isSubscriptionEnforced.value);
+          storage.write('is_qr_login_enabled', isQrLoginEnabled.value);
+          storage.write('is_offline_sync_enabled', isOfflineSyncEnabled.value);
         } catch (e) { print("Error fetching cafe info: $e"); }
       }(),
 

@@ -9,6 +9,8 @@ import '../../data/services/api_service.dart';
 import '../../data/services/socket_service.dart';
 import '../../data/services/printer_service.dart';
 import '../../data/services/update_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:uuid/uuid.dart';
 
 abstract class POSControllerState extends GetxController {
   final storage = GetStorage();
@@ -17,6 +19,10 @@ abstract class POSControllerState extends GetxController {
   final printerService = PrinterService();
   final updateService = UpdateService();
   final audioPlayer = AudioPlayer();
+  final uuid = const Uuid();
+  
+  var isOnline = true.obs;
+  var syncQueue = <Map<String, dynamic>>[].obs; // Queue of tasks to sync
   
   var currentOrder = <Map<String, dynamic>>[].obs;
   var allOrders = <Map<String, dynamic>>[].obs;
@@ -89,6 +95,15 @@ abstract class POSControllerState extends GetxController {
   var telegram = "".obs;
   var allowWaiterMobileOrders = true.obs;
 
+  // Feature Flags (from backend)
+  var isGeofencingEnabled = true.obs;
+  var isShiftBroadcastEnabled = true.obs;
+  var isTableManagementEnabled = true.obs;
+  var isKitchenPrintEnabled = true.obs;
+  var isSubscriptionEnforced = true.obs;
+  var isQrLoginEnabled = true.obs;
+  var isOfflineSyncEnabled = true.obs;
+
   // Printing Toggles
   var enableKitchenPrint = true.obs;
   var enableBillPrint = true.obs;
@@ -160,4 +175,6 @@ abstract class POSControllerState extends GetxController {
   void clearCurrentOrder();
   Future<void> printOrder(Map<String, dynamic> order, {bool isKitchenOnly = false, String? receiptTitle});
   Future<void> printLocally(Map<String, dynamic> order, {bool isKitchenOnly = false, String? receiptTitle});
+  bool addToSyncQueue(String type, Map<String, dynamic> data);
+  Future<void> processSyncQueue();
 }

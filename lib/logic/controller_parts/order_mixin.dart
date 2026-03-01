@@ -173,16 +173,22 @@ mixin OrderMixin on POSControllerState {
   }
 
   Future<void> updateOrderStatus(dynamic orderId, String status) async {
-    try {
-      await api.updateOrderStatus(orderId, status);
-      int index = allOrders.indexWhere((o) => o['id'] == orderId);
-      if (index != -1) {
-        allOrders[index]['status'] = status.toString().replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" ");
-        allOrders.refresh();
-        saveAllOrders();
+    if (isOnline.value) {
+      try {
+        await api.updateOrderStatus(orderId, status);
+      } catch (e) {
+        print("Online status update failed: $e");
+        addToSyncQueue('UPDATE_STATUS', {'id': orderId, 'status': status});
       }
-    } catch (e) {
-      print("Error updating status: $e");
+    } else {
+      addToSyncQueue('UPDATE_STATUS', {'id': orderId, 'status': status});
+    }
+
+    int index = allOrders.indexWhere((o) => o['id'] == orderId);
+    if (index != -1) {
+      allOrders[index]['status'] = status.toString().replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" ");
+      allOrders.refresh();
+      saveAllOrders();
     }
   }
 
