@@ -91,6 +91,7 @@ class SocketService {
   }
 
   void onWaiterCall(Function(dynamic) callback) {
+    socket.off('waiterCall');
     socket.on('waiterCall', (data) => callback(data));
   }
 

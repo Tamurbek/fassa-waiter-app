@@ -38,7 +38,7 @@ class WelcomePage extends StatelessWidget {
               ),
               const SizedBox(height: 48),
               const Text(
-                'Fayz',
+                'Fassa',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 42,

@@ -101,54 +101,76 @@ void onStart(ServiceInstance service) async {
     );
   }
 
-  final user = storage.read('user');
-  if (user != null) {
-    final waiterCafeId = storage.read('waiter_cafe_id');
-    final String cafeId = waiterCafeId ?? user['cafe_id']?.toString() ?? "";
-    
-    if (cafeId.isNotEmpty) {
-      final socketService = SocketService();
-      socketService.setCafeId(cafeId);
-      final audioPlayer = AudioPlayer();
+  // Helper to setup socket with current credentials
+  bool isSocketInitialized = false;
+  final audioPlayer = AudioPlayer();
+
+  void setupSocketConnectivity() async {
+    await storage.initStorage; // Refresh storage state
+    final user = storage.read('user');
+    if (user != null) {
+      final waiterCafeId = storage.read('waiter_cafe_id');
+      final String cafeId = waiterCafeId ?? user['cafe_id']?.toString() ?? "";
       
-      socketService.onWaiterCall((data) async {
-        if (user['id']?.toString() == data['waiter_id']?.toString()) {
-          try {
-            await audioPlayer.play(UrlSource('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
-          } catch (e) {
-            print("Background sound playback error: $e");
+      if (cafeId.isNotEmpty) {
+        final socketService = SocketService();
+        socketService.setCafeId(cafeId);
+        
+        socketService.onWaiterCall((data) async {
+          if (user['id']?.toString() == data['waiter_id']?.toString()) {
+            try {
+              await audioPlayer.stop();
+              await audioPlayer.play(UrlSource('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
+            } catch (e) {
+              print("Background sound playback error: $e");
+            }
+            
+            if (await Vibration.hasVibrator() ?? false) {
+              Vibration.vibrate(duration: 2000, amplitude: 255);
+            }
+            
+            if (Platform.isAndroid) {
+              const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+                'waiter_call_channel',
+                'Xodim chaqiruvlari',
+                importance: Importance.max,
+                priority: Priority.high,
+                fullScreenIntent: true,
+                category: AndroidNotificationCategory.status,
+                visibility: NotificationVisibility.public,
+                playSound: true,
+                ongoing: false,
+                autoCancel: true,
+                styleInformation: BigTextStyleInformation(''),
+              );
+              const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidDetails);
+              flutterLocalNotificationsPlugin.show(
+                DateTime.now().millisecond,
+                'Chaqiruv!',
+                '${data['sender_name']} sizni chaqirmoqda',
+                platformChannelSpecifics,
+              );
+            }
           }
-          
-          if (await Vibration.hasVibrator()) {
-            Vibration.vibrate(duration: 2000, amplitude: 255);
-          }
-          
-          if (Platform.isAndroid) {
-            const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-              'waiter_call_channel',
-              'Xodim chaqiruvlari',
-              importance: Importance.max,
-              priority: Priority.high,
-              fullScreenIntent: true,
-              category: AndroidNotificationCategory.call,
-              visibility: NotificationVisibility.public,
-              playSound: true,
-              styleInformation: BigTextStyleInformation(''),
-            );
-            const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidDetails);
-            flutterLocalNotificationsPlugin.show(
-              DateTime.now().millisecond,
-              'Chaqiruv!',
-              '${data['sender_name']} sizni chaqirmoqda',
-              platformChannelSpecifics,
-            );
-          }
-        }
-      });
+        });
+        isSocketInitialized = true;
+      }
     }
   }
 
+  // Initial setup
+  setupSocketConnectivity();
+
+  // Also listen for manual refresh from main app
+  service.on('refreshConfig').listen((event) {
+    setupSocketConnectivity();
+  });
+
   Timer.periodic(const Duration(seconds: 30), (timer) async {
+    if (!isSocketInitialized) {
+      setupSocketConnectivity();
+    }
+    
     if (service is AndroidServiceInstance) {
       if (!(await service.isForegroundService())) {
         return;

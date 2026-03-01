@@ -198,6 +198,9 @@ mixin UserAuthMixin on POSControllerState {
         }
       }
       socket.setCafeId(cafeId);
+      if (Platform.isAndroid || Platform.isIOS) {
+        FlutterBackgroundService().invoke('refreshConfig');
+      }
       fetchBackendData(); // Sync data immediately after login
     } else {
       storage.remove('user');
