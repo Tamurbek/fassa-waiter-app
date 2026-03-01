@@ -262,7 +262,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateOrder(int orderId, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updateOrder(dynamic orderId, Map<String, dynamic> data) async {
     try {
       final response = await _dio.put('/orders/$orderId', data: data);
       return response.data;
@@ -280,7 +280,7 @@ class ApiService {
     }
   }
 
-  Future<void> updateOrderStatus(int orderId, String status) async {
+  Future<void> updateOrderStatus(dynamic orderId, String status) async {
     try {
       final backendStatus = status.toUpperCase().replaceAll(" ", "_");
       await _dio.patch('/orders/$orderId/status', data: {'status': backendStatus});

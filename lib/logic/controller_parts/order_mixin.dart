@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/models/food_item.dart';
@@ -171,7 +172,7 @@ mixin OrderMixin on POSControllerState {
     isOrderModified.value = currentJson != originalOrderJson;
   }
 
-  Future<void> updateOrderStatus(int orderId, String status) async {
+  Future<void> updateOrderStatus(dynamic orderId, String status) async {
     try {
       await api.updateOrderStatus(orderId, status);
       int index = allOrders.indexWhere((o) => o['id'] == orderId);
@@ -185,7 +186,7 @@ mixin OrderMixin on POSControllerState {
     }
   }
 
-  void deleteOrder(int orderId) {
+  void deleteOrder(dynamic orderId) {
     allOrders.removeWhere((o) => o['id'] == orderId);
     printedKitchenQuantities.remove(orderId.toString());
     storage.write('printed_kitchen_items', Map.from(printedKitchenQuantities));
@@ -193,7 +194,7 @@ mixin OrderMixin on POSControllerState {
     saveAllOrders();
   }
 
-  Future<void> changeOrderTable(int orderId, String newTableId) async {
+  Future<void> changeOrderTable(dynamic orderId, String newTableId) async {
     try {
       await api.updateOrder(orderId, {"table_number": newTableId});
       int index = allOrders.indexWhere((o) => o['id'] == orderId);
@@ -252,7 +253,7 @@ mixin OrderMixin on POSControllerState {
   }
 
   void loadOrderForEditing(Map<String, dynamic> order, List<FoodItem> catalog) {
-    editingOrderId.value = order['id'];
+    editingOrderId.value = order['id']?.toString();
     currentMode.value = order['mode'] ?? "Dine-in";
     final String tableVal = (order['table'] ?? "").toString();
     if (tableVal != "-" && tableVal.isNotEmpty) {

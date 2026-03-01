@@ -514,10 +514,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -525,22 +525,22 @@ class _HomeScreenState extends State<HomeScreen> {
           GestureDetector(
             onTap: () => pos.decrementFromCart(item, variant: variant),
             child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.remove, size: 18, color: Color(0xFF1A1A1A)),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.remove, size: 22, color: Color(0xFF1A1A1A)),
             ),
           ),
           Container(
-            constraints: const BoxConstraints(minWidth: 32),
+            constraints: const BoxConstraints(minWidth: 44),
             alignment: Alignment.center,
-            child: Text("$qty", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            child: Text("$qty", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
           ),
           GestureDetector(
             onTap: () => pos.addToCart(item, variant: variant),
             child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.add, size: 18, color: Colors.white),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.add, size: 22, color: Colors.white),
             ),
           ),
         ],
@@ -550,10 +550,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCounterControl(FoodItem item, int qty, POSController pos) {
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -561,22 +561,22 @@ class _HomeScreenState extends State<HomeScreen> {
           GestureDetector(
             onTap: () => pos.decrementFromCart(item),
             child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.remove, size: 18, color: Color(0xFF1A1A1A)),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.remove, size: 22, color: Color(0xFF1A1A1A)),
             ),
           ),
           Container(
-            constraints: const BoxConstraints(minWidth: 32),
+            constraints: const BoxConstraints(minWidth: 44),
             alignment: Alignment.center,
-            child: Text("$qty", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            child: Text("$qty", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
           ),
           GestureDetector(
             onTap: () => pos.addToCart(item),
             child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.add, size: 18, color: Colors.white),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.add, size: 22, color: Colors.white),
             ),
           ),
         ],

@@ -16,32 +16,50 @@ class CartScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Column(
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(pos.isWithinGeofence.value ? kToolbarHeight : kToolbarHeight + 40),
+        child: Column(
           children: [
-            Text("review_bill".tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            Obx(() => Text(
-              pos.selectedTable.value.isNotEmpty ? "${pos.selectedTable.value}-stol" : "Savat",
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.normal),
-            )),
+            Obx(() => !pos.isWithinGeofence.value && pos.isWaiter ? Container(
+              width: double.infinity,
+              color: Colors.red,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: const Text(
+                "Diqqat: Kafe hududidan tashqaridasiz. Buyurtma berish cheklangan.",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+              ),
+            ) : const SizedBox.shrink()),
+            AppBar(
+              elevation: 0,
+              backgroundColor: Colors.white,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1A1A1A), size: 18),
+                onPressed: () => Get.back(),
+              ),
+              title: Column(
+                children: [
+                  Text("review_bill".tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  Obx(() => Text(
+                    pos.selectedTable.value.isNotEmpty ? "${pos.selectedTable.value}-stol" : "Savat",
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.normal),
+                  )),
+                ],
+              ),
+              centerTitle: true,
+              actions: [
+                Obx(() => pos.currentOrder.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent),
+                      onPressed: () => _showClearConfirmation(pos),
+                    )
+                  : const SizedBox.shrink()
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
           ],
         ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Get.back(),
-        ),
-        actions: [
-          Obx(() => pos.currentOrder.isNotEmpty 
-            ? IconButton(
-                icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent),
-                onPressed: () => _showClearConfirmation(pos),
-              )
-            : const SizedBox.shrink()
-          ),
-        ],
       ),
       body: Obx(() {
         if (pos.currentOrder.isEmpty) return _buildEmptyCart();
@@ -273,9 +291,9 @@ class CartScreen extends StatelessWidget {
                 children: [
                   _buildCounterButton(Icons.remove, () => pos.updateQuantity(index, -1)),
                   Container(
-                    constraints: const BoxConstraints(minWidth: 36),
+                    constraints: const BoxConstraints(minWidth: 40),
                     alignment: Alignment.center,
-                    child: Text(qty.toString(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    child: Text(qty.toString(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
                   ),
                   _buildCounterButton(Icons.add, () => pos.updateQuantity(index, 1), isAdd: true),
                 ],
@@ -333,12 +351,12 @@ class CartScreen extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: isAdd ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, size: 20, color: isAdd ? AppColors.primary : Colors.grey.shade400),
+        child: Icon(icon, size: 24, color: isAdd ? AppColors.primary : Colors.grey.shade400),
       ),
     );
   }

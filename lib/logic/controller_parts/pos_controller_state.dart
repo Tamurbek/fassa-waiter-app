@@ -58,7 +58,7 @@ abstract class POSControllerState extends GetxController {
 
   var selectedTable = "".obs;
   var lockedTables = <String, String>{}.obs; // {"tableId": "userName"}
-  var editingOrderId = RxnInt(); // Track if we are editing an existing order
+  var editingOrderId = RxnString(); // Track if we are editing an existing order
   String originalOrderJson = ""; // To check if any changes were made
   var isOrderModified = false.obs;
 

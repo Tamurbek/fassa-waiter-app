@@ -17,7 +17,6 @@ class _TableSelectionScreenState extends State<TableSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final POSController pos = Get.find<POSController>();
-    final bool isMobile = Responsive.isMobile(context);
 
     return Obx(() {
       final List<String> locations = pos.tableAreas.toList();
@@ -163,7 +162,6 @@ class _FloorPlanView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Show simplified grid view only on mobile phones
     if (Responsive.isMobile(context)) {
       return GridView.builder(
         padding: const EdgeInsets.all(24),
@@ -189,7 +187,6 @@ class _FloorPlanView extends StatelessWidget {
             final bool isLockedByMe = lockedByUser != null && lockedByUser == (pos.currentUser.value?['name'] ?? "User");
             final bool isLockedByOther = lockedByUser != null && !isLockedByMe;
 
-            // NEW: Check if this table is served by another waiter
             final bool isServedByOther = isOccupied && 
                                         servingWaiter != null && 
                                         servingWaiter != (pos.currentUser.value?['name'] ?? "") &&
@@ -215,7 +212,7 @@ class _FloorPlanView extends StatelessWidget {
                   }
                 } else {
                   if (pos.isWaiter && !pos.allowWaiterMobileOrders.value && pos.currentTerminal.value == null) {
-                    Get.snackbar("Ruxsat berilmagan", "Shaxsiy telefondan buyurtma olish taqiqlangan. Iltimos, POS terminaldan foydalaning.", 
+                    Get.snackbar("Ruxsat berilmagan", "Shaxsiy telefondan buyurtma olish taqiqlangan.", 
                       backgroundColor: Colors.red, colorText: Colors.white);
                     return;
                   }
@@ -227,7 +224,7 @@ class _FloorPlanView extends StatelessWidget {
                 tableNum: tableNum,
                 isOccupied: isOccupied,
                 isEditMode: false,
-                lockedByUser: lockedByUser ?? servingWaiter, // Show serving waiter if not actively locked
+                lockedByUser: lockedByUser ?? servingWaiter,
                 isLockedByOther: isLockedByOther || isServedByOther,
               ),
             );
@@ -236,7 +233,6 @@ class _FloorPlanView extends StatelessWidget {
       );
     }
 
-    // Show custom floor plan for Terminal/Desktop/Tablet
     return LayoutBuilder(
       builder: (context, constraints) {
         double maxTableX = constraints.maxWidth;
@@ -350,14 +346,11 @@ class _FloorPlanView extends StatelessWidget {
                             Get.to(() => const HomeScreen());
                           }
                         } else {
-                          // Check mobile orders permission for waiters if they are on a personal phone
-                          // (Even though floor plan usually shown on tablet/desktop, we keep permission check consistent)
                           if (pos.isWaiter && !pos.allowWaiterMobileOrders.value && pos.currentTerminal.value == null) {
                             Get.snackbar("Ruxsat berilmagan", "Shaxsiy telefondan buyurtma olish taqiqlangan.", 
                               backgroundColor: Colors.red, colorText: Colors.white);
                             return;
                           }
-    
                           pos.setTable(tableId);
                           if (pos.isAdmin || pos.isCashier) {
                             pos.showWaiterSelectionDialog(tableId, () {
@@ -371,176 +364,23 @@ class _FloorPlanView extends StatelessWidget {
                       }),
                       child: _TableWidget(
                         tableNum: tableNum,
-                  final posData = pos.tablePositions[tableId];
-                  if (posData != null) {
-                     final props = pos.tableProperties[tableId] ?? {};
-                     double w = (props['width'] as num?)?.toDouble() ?? 80.0;
-                     double h = (props['height'] as num?)?.toDouble() ?? 80.0;
-                     if (posData['x']! + w > maxTableX) maxTableX = posData['x']! + w + 200;
-                     if (posData['y']! + h > maxTableY) maxTableY = posData['y']! + h + 200;
-                  }
-                }
-
-                final areaDetails = pos.tableAreaDetails[location];
-                final String dimText = areaDetails != null 
-                    ? "${areaDetails['width_m']}m x ${areaDetails['height_m']}m" 
-                    : "";
-
-                return InteractiveViewer(
-                  boundaryMargin: const EdgeInsets.all(1000),
-                  minScale: 0.1,
-                  maxScale: 2.5,
-                  panEnabled: !pos.isEditMode.value, 
-                  child: Container(
-                    width: maxTableX,
-                    height: maxTableY,
-                    color: Colors.grey.withOpacity(0.02),
-                    child: Stack(
-                      children: [
-                        if (dimText.isNotEmpty)
-                          Positioned(
-                            right: 20, bottom: 20,
-                            child: GestureDetector(
-                              onTap: pos.isAdmin ? () => _showAreaSettingsDialog(context) : null,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(dimText, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
-                                    if (pos.isAdmin) ...[
-                                      const SizedBox(width: 8),
-                                      Icon(Icons.settings, size: 14, color: Colors.grey.shade600),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ...tables.map((tableNum) {
-                          final String tableId = "$location-$tableNum";
-                          final position = pos.tablePositions[tableId] ?? _getDefaultPosition(tableNum, maxTableX, maxTableY);
-                          final Map<String, dynamic> props = pos.tableProperties[tableId] ?? {};
-                          final double tableWidth = (props['width'] as num?)?.toDouble() ?? 80.0;
-                          final double tableHeight = (props['height'] as num?)?.toDouble() ?? 80.0;
-                          final String tableShape = props['shape']?.toString() ?? "square";
-
-                          final activeOrder = pos.allOrders.firstWhereOrNull((o) => 
-                            o['table'] == tableId && 
-                            !["Completed", "Cancelled"].contains(o['status'])
-                          );
-                          final bool isOccupied = activeOrder != null;
-                          final String? servingWaiter = activeOrder?['waiter_name'];
-
-                          final String? lockedByUser = pos.lockedTables[tableId];
-                          final bool isLockedByMe = lockedByUser != null && lockedByUser == (pos.currentUser.value?['name'] ?? "User");
-                          final bool isLockedByOther = lockedByUser != null && !isLockedByMe;
-
-                          final bool isServedByOther = isOccupied && 
-                                                      servingWaiter != null && 
-                                                      servingWaiter != (pos.currentUser.value?['name'] ?? "") &&
-                                                      pos.isWaiter;
-
-                          return Positioned(
-                            left: position['x']!,
-                            top: position['y']!,
-                            child: GestureDetector(
-                              onPanUpdate: pos.isEditMode.value ? (details) {
-                                double newX = position['x']! + details.delta.dx;
-                                double newY = position['y']! + details.delta.dy;
-                                newX = newX.clamp(0.0, maxTableX - tableWidth);
-                                newY = newY.clamp(0.0, maxTableY - tableHeight);
-                                pos.updateTablePosition(tableId, newX, newY);
-                              } : null,
-                              onPanEnd: pos.isEditMode.value ? (_) {
-                                pos.syncTablePositionWithBackend(tableId);
-                              } : null,
-                              onTap: pos.isEditMode.value ? null : (isLockedByOther || isServedByOther ? () {
-                                final String reason = isLockedByOther 
-                                    ? "Ushbu stolni hozirda $lockedByUser tahrirlamoqda"
-                                    : "Ushbu stolga $servingWaiter xizmat ko'rsatmoqda";
-                                Get.snackbar("Xatolik", reason, backgroundColor: Colors.orange, colorText: Colors.white);
-                              } : () {
-                                if (isOccupied) {
-                                  final order = activeOrder;
-                                  if (order != null) {
-                                    if (order['status'] == "Bill Printed" && !(pos.isAdmin || pos.isCashier)) {
-                                      Get.snackbar("Xatolik", "Ushbu buyurtma cheki chiqarilgan (qulflangan)", 
-                                          backgroundColor: Colors.red, colorText: Colors.white);
-                                      return;
-                                    }
-                                    pos.loadOrderForEditing(order, pos.products);
-                                    Get.to(() => const HomeScreen());
-                                  }
-                                } else {
-                                  // Check mobile orders permission for waiters if they are on a personal phone
-                                  // (Even though floor plan usually shown on tablet/desktop, we keep permission check consistent)
-                                  if (pos.isWaiter && !pos.allowWaiterMobileOrders.value && pos.currentTerminal.value == null) {
-                                    Get.snackbar("Ruxsat berilmagan", "Shaxsiy telefondan buyurtma olish taqiqlangan.", 
-                                      backgroundColor: Colors.red, colorText: Colors.white);
-                                    return;
-                                  }
-            
-                                  pos.setTable(tableId);
-                                  if (pos.isAdmin || pos.isCashier) {
-                                    pos.showWaiterSelectionDialog(tableId, () {
-                                      Get.to(() => const HomeScreen());
-                                    });
-                                  } else {
-                                    pos.selectedWaiter.value = null;
-                                    Get.to(() => const HomeScreen());
-                                  }
-                                }
-                              }),
-                              child: _TableWidget(
-                                tableNum: tableNum,
-                                isOccupied: isOccupied,
-                                isEditMode: pos.isEditMode.value,
-                                lockedByUser: lockedByUser ?? servingWaiter,
-                                isLockedByOther: isLockedByOther || isServedByOther,
-                                width: tableWidth,
-                                height: tableHeight,
-                                shape: tableShape,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ],
+                        isOccupied: isOccupied,
+                        isEditMode: pos.isEditMode.value,
+                        lockedByUser: lockedByUser ?? servingWaiter,
+                        isLockedByOther: isLockedByOther || isServedByOther,
+                        width: tableWidth,
+                        height: tableHeight,
+                        shape: tableShape,
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                }).toList(),
+              ],
             ),
           ),
-        ],
-      ),
+        ));
+      },
     );
-  }
-
-  Widget _buildGeofenceBanner(POSController pos) {
-    return Obx(() {
-      if (pos.isWithinGeofence.value || !pos.isWaiter) return const SizedBox.shrink();
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        color: Colors.red,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.location_off, color: Colors.white, size: 16),
-            SizedBox(width: 8),
-            Text(
-              "Hozirda hududdan tashqaridasiz!",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-            ),
-          ],
-        ),
-      );
-    });
   }
 
   void _showAreaSettingsDialog(BuildContext context) {
@@ -586,10 +426,8 @@ class _FloorPlanView extends StatelessWidget {
   }
 
   Map<String, double> _getDefaultPosition(String tableNum, double width, double height) {
-    // Extract numbers if possible, otherwise use hash
     int? parsed = int.tryParse(tableNum.replaceAll(RegExp(r'[^0-9]'), ''));
     int index = (parsed ?? tableNum.hashCode.abs()) % 20;
-    
     int cols = (width / 100).floor().clamp(1, 10);
     double x = (index % cols) * 100.0 + 20;
     double y = (index ~/ cols) * 100.0 + 20;
@@ -701,5 +539,3 @@ class _StatusIndicator extends StatelessWidget {
     );
   }
 }
-
-

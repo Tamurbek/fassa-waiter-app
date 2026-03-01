@@ -219,7 +219,7 @@ mixin DataSyncMixin on POSControllerState {
     final details = groupedDetails.values.toList();
 
     return {
-      "id": o['id'],
+      "id": o['id']?.toString(),
       "table": tableNum != null ? tableNum.toString() : "-",
       "mode": typeStr.toString().toLowerCase().replaceAll("_", "-").capitalizeFirst,
       "items": details.fold(0, (sum, item) => sum + (item['qty'] as int)),
@@ -254,7 +254,7 @@ mixin DataSyncMixin on POSControllerState {
 
   void setupSocketListeners() {
     socket.onOrderStatusUpdated((data) {
-      int index = allOrders.indexWhere((o) => o['id'] == data['orderId']);
+      int index = allOrders.indexWhere((o) => o['id']?.toString() == data['orderId']?.toString());
       if (index != -1) {
         String rawStatus = data['status'].toString();
         allOrders[index]['status'] = rawStatus.replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" ");

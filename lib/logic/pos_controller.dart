@@ -409,6 +409,7 @@ class POSController extends POSControllerState with
     selectedTable.value = table;
     if (table.isNotEmpty) socket.emitTableLock(table, currentUser.value?['name'] ?? "User");
   }
+  void setMode(String mode) => currentMode.value = mode;
   void toggleEditMode() => isEditMode.value = !isEditMode.value;
   void setDeviceRole(String? role) { deviceRole.value = role; storage.write('device_role', role); }
   void setWaiterCafeId(String? cafeId) { waiterCafeId.value = cafeId; storage.write('waiter_cafe_id', cafeId); }
