@@ -24,7 +24,8 @@ mixin DataSyncMixin on POSControllerState {
   }
 
   void initConnectivityListener() {
-    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      ConnectivityResult result = results.isNotEmpty ? results.first : ConnectivityResult.none;
       bool wasOffline = !isOnline.value;
       isOnline.value = result != ConnectivityResult.none;
       
