@@ -220,49 +220,48 @@ class POSController extends POSControllerState with
     isSubmitting.value = true;
     try {
       bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-    
-    if (!isWithinGeofence.value && isWaiter && !isDesktop) {
-      Get.snackbar("Xato", "Buyurtma berish uchun kafe hududida bo'lishingiz kerak.", 
-          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
-      return false;
-    }
+      
+      if (!isWithinGeofence.value && isWaiter && !isDesktop) {
+        Get.snackbar("Xato", "Buyurtma berish uchun kafe hududida bo'lishingiz kerak.", 
+            backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+        return false;
+      }
 
-    if (editingOrderId.value != null) return await updateExistingOrder(isPaid: isPaid);
+      if (editingOrderId.value != null) return await updateExistingOrder(isPaid: isPaid);
 
-    final orderData = {
-      "table_number": currentMode.value == "Dine-in" ? selectedTable.value : null,
-      "type": currentMode.value.toUpperCase().replaceAll("-", "_"),
-      "is_paid": isPaid,
-      "waiter_name": selectedWaiter.value ?? currentUser.value?['name'],
-      "cafe_id": cafeId,
-      "items": () {
-        final Map<String, Map<String, dynamic>> grouped = {};
-        for (var e in currentOrder) {
-          final FoodItem item = e['item'] as FoodItem;
-          final FoodVariant? variant = e['variant'] as FoodVariant?;
-          final String id = item.id.toString();
-          final String? variantId = variant?.id;
-          final String groupKey = variantId != null ? "${id}_$variantId" : id;
-          final int qty = e['quantity'] as int;
-          if (qty <= 0) continue;
+      final orderData = {
+        "table_number": currentMode.value == "Dine-in" ? selectedTable.value : null,
+        "type": currentMode.value.toUpperCase().replaceAll("-", "_"),
+        "is_paid": isPaid,
+        "waiter_name": selectedWaiter.value ?? currentUser.value?['name'],
+        "cafe_id": cafeId,
+        "items": () {
+          final Map<String, Map<String, dynamic>> grouped = {};
+          for (var e in currentOrder) {
+            final FoodItem item = e['item'] as FoodItem;
+            final FoodVariant? variant = e['variant'] as FoodVariant?;
+            final String id = item.id.toString();
+            final String? variantId = variant?.id;
+            final String groupKey = variantId != null ? "${id}_$variantId" : id;
+            final int qty = e['quantity'] as int;
+            if (qty <= 0) continue;
 
-          if (grouped.containsKey(groupKey)) {
-            grouped[groupKey]!['quantity'] += qty;
-          } else {
-            grouped[groupKey] = {
-              "product_id": id,
-              "variant_id": variantId,
-              "variant_name": variant?.name,
-              "quantity": qty,
-              "price": variant?.price ?? item.price
-            };
+            if (grouped.containsKey(groupKey)) {
+              grouped[groupKey]!['quantity'] += qty;
+            } else {
+              grouped[groupKey] = {
+                "product_id": id,
+                "variant_id": variantId,
+                "variant_name": variant?.name,
+                "quantity": qty,
+                "price": variant?.price ?? item.price
+              };
+            }
           }
-        }
-        return grouped.values.toList();
-      }(),
-    };
+          return grouped.values.toList();
+        }(),
+      };
 
-    try {
       final newOrder = await api.createOrder(orderData);
       final normalized = normalizeOrder(newOrder);
       
@@ -275,13 +274,13 @@ class POSController extends POSControllerState with
         allOrders[index] = normalized;
       }
       
-    final orderId = normalized['id']?.toString();
-    if (orderId != null) {
-      _processedPrintIds[orderId] = DateTime.now();
-    }
+      final orderId = normalized['id']?.toString();
+      if (orderId != null) {
+        _processedPrintIds[orderId] = DateTime.now();
+      }
 
-    await printOrder(normalized, isKitchenOnly: !isPaid, 
-        receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
+      await printOrder(normalized, isKitchenOnly: !isPaid, 
+          receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
 
       clearCurrentOrder();
       saveAllOrders();

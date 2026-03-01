@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'pos_controller_state.dart';
 import '../../presentation/pages/auth/terminal_selection_page.dart';
 import '../../presentation/pages/auth/pin_code_screen.dart';
