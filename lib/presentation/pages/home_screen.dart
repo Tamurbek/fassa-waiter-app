@@ -256,8 +256,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return GridView.builder(
       padding: EdgeInsets.all(isMobile ? 24 : 40),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 200,
-        childAspectRatio: 0.8,
+        maxCrossAxisExtent: 220,
+        childAspectRatio: 0.65,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
@@ -355,9 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                             ),
-                            if (isMobile && qty > 0)
-                              _buildCounterControl(item, qty, pos)
-                            else
+                            if (isMobile && qty == 0)
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
@@ -372,6 +370,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                           ],
                         ),
+                        if (isMobile && qty > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Center(child: _buildCounterControl(item, qty, pos)),
+                          ),
                       ],
                     ),
                   ),
