@@ -19,9 +19,9 @@ Future<void> initializeService() async {
 
   if (Platform.isAndroid) {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'location_service_channel',
-        'Location Service',
-        description: 'This channel is used for location tracking.',
+        'waiter_service_channel',
+        'Fassa Waiter Service',
+        description: 'Bu kanal xizmatning fonda uzluksiz ishlashini ta\'minlash uchun ishlatiladi.',
         importance: Importance.low,
       );
 
@@ -50,15 +50,15 @@ Future<void> initializeService() async {
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       onStart: onStart,
-      autoStart: false,
+      autoStart: true,
       isForegroundMode: true,
-      notificationChannelId: 'location_service_channel',
-      initialNotificationTitle: 'Location Tracking',
-      initialNotificationContent: 'Track xodimlari joylashuvi faol',
+      notificationChannelId: 'waiter_service_channel',
+      initialNotificationTitle: 'Fassa Waiter Service',
+      initialNotificationContent: 'Xizmat ishlamoqda...',
       foregroundServiceNotificationId: 888,
     ),
     iosConfiguration: IosConfiguration(
-      autoStart: false,
+      autoStart: true,
       onForeground: onStart,
       onBackground: onIosBackground,
     ),
@@ -77,6 +77,7 @@ void onStart(ServiceInstance service) async {
   final storage = GetStorage();
 
   if (service is AndroidServiceInstance) {
+    service.setAsForegroundService();
     service.on('setAsForeground').listen((event) {
       service.setAsForegroundService();
     });
@@ -128,6 +129,11 @@ void onStart(ServiceInstance service) async {
               'Xodim chaqiruvlari',
               importance: Importance.max,
               priority: Priority.high,
+              fullScreenIntent: true,
+              category: AndroidNotificationCategory.call,
+              visibility: NotificationVisibility.public,
+              playSound: true,
+              styleInformation: BigTextStyleInformation(''),
             );
             const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidDetails);
             flutterLocalNotificationsPlugin.show(
