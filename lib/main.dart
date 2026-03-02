@@ -15,16 +15,28 @@ import 'presentation/pages/auth/welcome_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'logic/background_service.dart';
 import 'presentation/components/location_checker.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'dart:async';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await initializeService();
-  await GetStorage.init();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  try {
+    await GetStorage.init();
+  } catch (e) {
+    print("Storage initialization error: $e");
+  }
   
-  // Initialize locale data
-  await initializeDateFormatting('uz_UZ', null);
-  await initializeDateFormatting('en_US', null);
-  await initializeDateFormatting('ru_RU', null);
+  // Initialize locale data in background
+  unawaited(initializeDateFormatting('uz_UZ', null));
+  unawaited(initializeDateFormatting('en_US', null));
+  unawaited(initializeDateFormatting('ru_RU', null));
+  
+  // Initialize Background Service without blocking UI startup
+  initializeService().catchError((e) {
+    print("Background service error: $e");
+  });
   
   // Initialize Controller
   Get.put(POSController());
@@ -45,6 +57,9 @@ class FassaApp extends StatelessWidget {
     Locale initialLocale = storedLang != null 
         ? Locale(storedLang.split('_')[0], storedLang.split('_')[1])
         : const Locale('uz', 'UZ');
+
+    // Remove splash screen after first frame
+    FlutterNativeSplash.remove();
 
     return GetMaterialApp(
       title: 'Fassa Waiter',
