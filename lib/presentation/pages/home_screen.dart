@@ -379,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: CommonImage(imageUrl: item.imageUrl, fit: BoxFit.cover, width: double.infinity, height: double.infinity),
                             ),
                             // Freshness Badge
-                            if (item.isFresh)
+                            if (pos.isStockTrackingEnabled.value && item.isFresh)
                               Positioned(
                                 top: 8, left: 8,
                                 child: Container(
@@ -389,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             // Low Stock Badge
-                            if (item.isLowStock)
+                            if (pos.isStockTrackingEnabled.value && item.isLowStock)
                               Positioned(
                                 bottom: 8, right: 8,
                                 child: Container(
@@ -399,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             // Sold Out Overlay
-                            if (item.isSoldOut || !item.isAvailable)
+                            if (!item.isAvailable || (pos.isStockTrackingEnabled.value && item.isSoldOut))
                               Positioned.fill(
                                 child: Container(
                                   decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(16)),
@@ -445,7 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ],
                                 ),
                               ),
-                              if (isMobile && qty == 0 && item.isAvailable && !item.isSoldOut)
+                              if (isMobile && qty == 0 && (item.isAvailable && (!pos.isStockTrackingEnabled.value || !item.isSoldOut)))
                                 Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(

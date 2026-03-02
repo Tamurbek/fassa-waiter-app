@@ -103,6 +103,7 @@ abstract class POSControllerState extends GetxController {
   var isSubscriptionEnforced = true.obs;
   var isQrLoginEnabled = true.obs;
   var isOfflineSyncEnabled = true.obs;
+  var isStockTrackingEnabled = true.obs;
 
   // Printing Toggles
   var enableKitchenPrint = true.obs;

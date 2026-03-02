@@ -137,6 +137,7 @@ class POSController extends POSControllerState with
     isSubscriptionEnforced.value = storage.read('is_subscription_enforced') ?? true;
     isQrLoginEnabled.value = storage.read('is_qr_login_enabled') ?? true;
     isOfflineSyncEnabled.value = storage.read('is_offline_sync_enabled') ?? true;
+    isStockTrackingEnabled.value = storage.read('is_stock_tracking_enabled') ?? true;
 
     // Load Cafe Settings (Offline/First-load)
     restaurantName.value = storage.read('restaurant_name') ?? "";
