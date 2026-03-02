@@ -363,76 +363,113 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 4))],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      width: double.infinity,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: CommonImage(imageUrl: item.imageUrl, fit: BoxFit.cover),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item.name, 
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1A1A1A)), 
-                          maxLines: 1, overflow: TextOverflow.ellipsis
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Opacity(
+                opacity: (item.isSoldOut || !item.isAvailable) ? 0.6 : 1.0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        width: double.infinity,
+                        child: Stack(
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (item.hasVariants && item.variants.isNotEmpty)
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text("Variantlar",
-                                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 10, color: Color(0xFF0EA5E9))),
-                                        Text("${NumberFormat("#,###", "uz_UZ").format(item.variants.first.price)} ${pos.currencySymbol}", 
-                                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFFF9500))),
-                                      ],
-                                    )
-                                  else
-                                    Text("${NumberFormat("#,###", "uz_UZ").format(item.price)} ${pos.currencySymbol}", 
-                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFFFF9500))),
-                                ],
-                              ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: CommonImage(imageUrl: item.imageUrl, fit: BoxFit.cover, width: double.infinity, height: double.infinity),
                             ),
-                            if (isMobile && qty == 0)
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: item.hasVariants ? const Color(0xFFE0F2FE) : const Color(0xFFFFF7ED),
-                                  borderRadius: BorderRadius.circular(10)
+                            // Freshness Badge
+                            if (item.isFresh)
+                              Positioned(
+                                top: 8, left: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(8)),
+                                  child: const Text("Yangi", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                                 ),
-                                child: Icon(
-                                  item.hasVariants ? Icons.expand_more : Icons.add,
-                                  color: item.hasVariants ? const Color(0xFF0EA5E9) : const Color(0xFFFF9500),
-                                  size: 18
+                              ),
+                            // Low Stock Badge
+                            if (item.isLowStock)
+                              Positioned(
+                                bottom: 8, right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(8)),
+                                  child: Text("${item.stockRemaining} qoldi", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            // Sold Out Overlay
+                            if (item.isSoldOut || !item.isAvailable)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(16)),
+                                  child: const Center(
+                                    child: Text("TUGADI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.black, fontSize: 16)),
+                                  ),
                                 ),
                               ),
                           ],
                         ),
-                        if (isMobile && qty > 0)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: Center(child: _buildCounterControl(item, qty, pos)),
-                          ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.name, 
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1A1A1A)), 
+                            maxLines: 1, overflow: TextOverflow.ellipsis
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (item.hasVariants && item.variants.isNotEmpty)
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text("Variantlar",
+                                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 10, color: Color(0xFF0EA5E9))),
+                                          Text("${NumberFormat("#,###", "uz_UZ").format(item.variants.first.price)} ${pos.currencySymbol}", 
+                                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFFF9500))),
+                                        ],
+                                      )
+                                    else
+                                      Text("${NumberFormat("#,###", "uz_UZ").format(item.price)} ${pos.currencySymbol}", 
+                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFFFF9500))),
+                                  ],
+                                ),
+                              ),
+                              if (isMobile && qty == 0 && item.isAvailable && !item.isSoldOut)
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: item.hasVariants ? const Color(0xFFE0F2FE) : const Color(0xFFFFF7ED),
+                                    borderRadius: BorderRadius.circular(10)
+                                  ),
+                                  child: Icon(
+                                    item.hasVariants ? Icons.expand_more : Icons.add,
+                                    color: item.hasVariants ? const Color(0xFF0EA5E9) : const Color(0xFFFF9500),
+                                    size: 18
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (isMobile && qty > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: Center(child: _buildCounterControl(item, qty, pos)),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             if (qty > 0)

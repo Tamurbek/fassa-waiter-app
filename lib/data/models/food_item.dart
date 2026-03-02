@@ -4,14 +4,25 @@ class FoodVariant {
   final String name;
   final double price;
   final bool isAvailable;
-
-  FoodVariant({required this.id, required this.name, required this.price, this.isAvailable = true});
+  final int? stockRemaining;
+  final DateTime? lastPreparedAt;
+  
+  FoodVariant({
+    required this.id, 
+    required this.name, 
+    required this.price, 
+    this.isAvailable = true,
+    this.stockRemaining,
+    this.lastPreparedAt,
+  });
 
   factory FoodVariant.fromJson(Map<String, dynamic> json) => FoodVariant(
     id: json['id']?.toString() ?? '',
     name: json['name'] ?? '',
     price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
     isAvailable: json['is_available'] ?? true,
+    stockRemaining: json['stock_remaining'],
+    lastPreparedAt: json['last_prepared_at'] != null ? DateTime.tryParse(json['last_prepared_at']) : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -19,6 +30,8 @@ class FoodVariant {
     'name': name,
     'price': price,
     'is_available': isAvailable,
+    'stock_remaining': stockRemaining,
+    'last_prepared_at': lastPreparedAt?.toIso8601String(),
   };
 }
 
@@ -35,6 +48,8 @@ class FoodItem {
   final String? preparationAreaId;
   final bool hasVariants;
   final bool isAvailable;
+  final int? stockRemaining;
+  final DateTime? lastPreparedAt;
   final List<FoodVariant> variants;
 
   const FoodItem({
@@ -50,6 +65,8 @@ class FoodItem {
     this.preparationAreaId,
     this.hasVariants = false,
     this.isAvailable = true,
+    this.stockRemaining,
+    this.lastPreparedAt,
     this.variants = const [],
   });
 
@@ -66,6 +83,8 @@ class FoodItem {
     'preparation_area_id': preparationAreaId,
     'has_variants': hasVariants,
     'is_available': isAvailable,
+    'stock_remaining': stockRemaining,
+    'last_prepared_at': lastPreparedAt?.toIso8601String(),
     'variants': variants.map((v) => v.toJson()).toList(),
   };
 
@@ -101,6 +120,8 @@ class FoodItem {
         preparationAreaId: json['preparation_area_id']?.toString(),
         hasVariants: json['has_variants'] ?? false,
         isAvailable: json['is_available'] ?? true,
+        stockRemaining: json['stock_remaining'],
+        lastPreparedAt: json['last_prepared_at'] != null ? DateTime.tryParse(json['last_prepared_at']) : null,
         variants: variantsList,
       );
     } catch (e) {
@@ -108,5 +129,23 @@ class FoodItem {
       print("JSON data: $json");
       rethrow;
     }
+  }
+
+  bool get isFresh {
+    if (lastPreparedAt == null) return false;
+    final now = DateTime.now();
+    return lastPreparedAt!.year == now.year &&
+           lastPreparedAt!.month == now.month &&
+           lastPreparedAt!.day == now.day;
+  }
+
+  bool get isLowStock => stockRemaining != null && stockRemaining! > 0 && stockRemaining! <= 5;
+  bool get isSoldOut => stockRemaining != null && stockRemaining! <= 0;
+}
+
+extension DateTimeExtension on DateTime {
+  bool isToday() {
+    final now = DateTime.now();
+    return year == now.year && month == now.month && day == now.day;
   }
 }
