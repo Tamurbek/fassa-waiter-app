@@ -404,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Container(
                                   decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(16)),
                                   child: const Center(
-                                    child: Text("TUGADI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.black, fontSize: 16)),
+                                    child: Text("TUGADI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
                                   ),
                                 ),
                               ),

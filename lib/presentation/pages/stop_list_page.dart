@@ -53,7 +53,7 @@ class StopListPage extends StatelessWidget {
             final String reason = !item.isAvailable ? "Admin tomonidan o'chirilgan" : "Tugadi (0 porsiya)";
             
             return Container(
-              margin: const EdgeInsets.bottom(12),
+              margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white,
