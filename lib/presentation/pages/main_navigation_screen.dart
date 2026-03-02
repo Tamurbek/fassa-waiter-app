@@ -7,6 +7,7 @@ import '../widgets/printing_overlay.dart';
 import 'orders_screen.dart';
 import 'settings_screen.dart';
 import 'table_selection_screen.dart';
+import 'stop_list_page.dart';
 
 class MainNavigationScreen extends StatelessWidget {
   const MainNavigationScreen({super.key});
@@ -19,6 +20,7 @@ class MainNavigationScreen extends StatelessWidget {
     final List<Map<String, dynamic>> menuItems = [
       {"icon": Icons.home_rounded, "label": "home_page".tr, "page": const OrdersScreen()},
       {"icon": Icons.table_restaurant_rounded, "label": "tables".tr, "page": const TableSelectionScreen(isRoot: true)},
+      {"icon": Icons.block_flipped, "label": "Stop-list", "page": const StopListPage()},
       {"icon": Icons.settings_rounded, "label": "settings".tr, "page": const SettingsScreen()},
     ];
 
