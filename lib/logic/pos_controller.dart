@@ -118,7 +118,7 @@ class POSController extends POSControllerState with
       } catch (e) { print("Error parsing printed_kitchen_items: $e"); }
     }
 
-    if (currentUser.value != null) {
+    if (currentUser.value != null || currentTerminal.value != null) {
       socket.setCafeId(cafeId);
     }
 
@@ -166,11 +166,12 @@ class POSController extends POSControllerState with
           final orderId = data['id']?.toString();
           if (orderId != null) {
             final now = DateTime.now();
-            if (_processedPrintIds.containsKey(orderId) && 
-                now.difference(_processedPrintIds[orderId]!).inSeconds < 10) {
+            final printKey = "${orderId}_kitchen_auto";
+            if (_processedPrintIds.containsKey(printKey) && 
+                now.difference(_processedPrintIds[printKey]!).inSeconds < 10) {
               return;
             }
-            _processedPrintIds[orderId] = now;
+            _processedPrintIds[printKey] = now;
           }
           printLocally(normalized, isKitchenOnly: true);
         }
@@ -180,13 +181,16 @@ class POSController extends POSControllerState with
     socket.onPrintRequest((data) async {
       if (isAdmin || isCashier) {
         final orderId = data['order']?['id']?.toString();
+        final String receiptTitle = data['receiptTitle']?.toString() ?? (data['isKitchenOnly'] == true ? "KITCHEN" : "ALL");
+
         if (orderId != null) {
           final now = DateTime.now();
-          if (_processedPrintIds.containsKey(orderId) && 
-              now.difference(_processedPrintIds[orderId]!).inSeconds < 10) {
+          final printKey = "${orderId}_$receiptTitle";
+          if (_processedPrintIds.containsKey(printKey) && 
+              now.difference(_processedPrintIds[printKey]!).inSeconds < 10) {
             return;
           }
-          _processedPrintIds[orderId] = now;
+          _processedPrintIds[printKey] = now;
         }
 
         final Map<String, dynamic> order = Map<String, dynamic>.from(data['order']);
