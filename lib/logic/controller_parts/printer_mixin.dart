@@ -16,7 +16,11 @@ mixin PrinterMixin on POSControllerState {
       if (name != null) order['waiter_name'] = name;
     }
 
-    if (deviceRole.value == "WAITER" || isWaiter) {
+    // Terminal rejimida (kassa sifatida ulangan) → DOIM lokal chop etadi
+    final bool isTerminalMode = currentTerminal.value != null;
+
+    // Faqat terminal YO'Q va rol WAITER bo'lsa → kassaga socket orqali yuboradi
+    if (!isTerminalMode && (deviceRole.value == "WAITER" || isWaiter)) {
       socket.emitPrintRequest({
         'order': order,
         'isKitchenOnly': isKitchenOnly,
@@ -33,6 +37,7 @@ mixin PrinterMixin on POSControllerState {
       return;
     }
 
+    // Terminal rejimi yoki Cashier/Admin → bevosita chop etadi
     await printLocally(order, isKitchenOnly: isKitchenOnly, receiptTitle: receiptTitle);
   }
 
