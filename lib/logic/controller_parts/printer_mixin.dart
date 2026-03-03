@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/models/printer_model.dart';
 import 'pos_controller_state.dart';
-import '../../data/models/food_item.dart';
 
 mixin PrinterMixin on POSControllerState {
   Future<void> printOrder(Map<String, dynamic> order, {bool isKitchenOnly = false, String? receiptTitle}) async {
