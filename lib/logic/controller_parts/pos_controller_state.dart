@@ -94,6 +94,8 @@ abstract class POSControllerState extends GetxController {
   var instagram = "".obs;
   var telegram = "".obs;
   var allowWaiterMobileOrders = true.obs;
+  var workStartTime = "00:00".obs;
+  var workEndTime = "23:59".obs;
 
   // Feature Flags (from backend)
   var isGeofencingEnabled = true.obs;

@@ -181,6 +181,33 @@ void onStart(ServiceInstance service) async {
     final String? token = storage.read('access_token');
     if (token == null) return;
 
+    // Check working hours
+    final String start = storage.read('work_start_time') ?? "00:00";
+    final String end = storage.read('work_end_time') ?? "23:59";
+    
+    bool isWorkTime() {
+      final now = DateTime.now();
+      final nowMinutes = now.hour * 60 + now.minute;
+      
+      final startParts = start.split(':');
+      final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+      
+      final endParts = end.split(':');
+      final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+      
+      if (startMinutes <= endMinutes) {
+        return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
+      } else {
+        // Overnight: e.g. 22:00 to 04:00
+        return nowMinutes >= startMinutes || nowMinutes <= endMinutes;
+      }
+    }
+
+    if (!isWorkTime()) {
+      print("Outside working hours ($start - $end), skipping location update.");
+      return;
+    }
+
     try {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,

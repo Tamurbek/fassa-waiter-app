@@ -35,12 +35,20 @@ class _LocationCheckerState extends State<LocationChecker> with WidgetsBindingOb
         }
       }
     });
+
+    // Refresh UI every minute for working hours check
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) setState(() {});
+    });
   }
+
+  Timer? _refreshTimer;
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _serviceStatusStreamSubscription?.cancel();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -76,9 +84,30 @@ class _LocationCheckerState extends State<LocationChecker> with WidgetsBindingOb
   Widget build(BuildContext context) {
     final pos = Get.find<POSController>();
     
-    // Only enforce location check for Waiters
+    // Only enforce location check for Waiters during working hours
     bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-    if (pos.deviceRole.value != "WAITER" || isDesktop) {
+    
+    bool isWorkTime() {
+      final start = pos.workStartTime.value;
+      final end = pos.workEndTime.value;
+      final now = DateTime.now();
+      final nowMinutes = now.hour * 60 + now.minute;
+      
+      final startParts = start.split(':');
+      final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+      
+      final endParts = end.split(':');
+      final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+      
+      if (startMinutes <= endMinutes) {
+        return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
+      } else {
+        // Overnight: e.g. 22:00 to 04:00
+        return nowMinutes >= startMinutes || nowMinutes <= endMinutes;
+      }
+    }
+
+    if (pos.deviceRole.value != "WAITER" || isDesktop || !isWorkTime()) {
       return widget.child;
     }
 

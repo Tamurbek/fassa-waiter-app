@@ -185,6 +185,8 @@ mixin DataSyncMixin on POSControllerState {
           instagram.value = cafe['instagram'] ?? "";
           telegram.value = cafe['telegram'] ?? "";
           allowWaiterMobileOrders.value = cafe['allow_waiter_mobile_orders'] ?? true;
+          workStartTime.value = cafe['work_start_time'] ?? "00:00";
+          workEndTime.value = cafe['work_end_time'] ?? "23:59";
 
           // Feature Flags
           isGeofencingEnabled.value = cafe['is_geofencing_enabled'] ?? true;
@@ -216,6 +218,8 @@ mixin DataSyncMixin on POSControllerState {
           storage.write('instagram', instagram.value);
           storage.write('telegram', telegram.value);
           storage.write('allow_waiter_mobile_orders', allowWaiterMobileOrders.value);
+          storage.write('work_start_time', workStartTime.value);
+          storage.write('work_end_time', workEndTime.value);
           
           storage.write('is_geofencing_enabled', isGeofencingEnabled.value);
           storage.write('is_shift_broadcast_enabled', isShiftBroadcastEnabled.value);
