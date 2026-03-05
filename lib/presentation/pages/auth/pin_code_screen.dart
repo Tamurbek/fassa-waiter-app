@@ -8,8 +8,6 @@ import '../main_navigation_screen.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:local_auth_android/local_auth_android.dart';
-import 'package:local_auth_darwin/local_auth_darwin.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:vibration/vibration.dart';
@@ -62,21 +60,28 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
 
   Future<void> _checkBiometrics() async {
     try {
-      bool canCheck = await auth.canCheckBiometrics || await auth.isDeviceSupported();
-      setState(() {
-        _canCheckBiometrics = canCheck;
-      });
-      
-      // Auto-trigger biometrics if allowed and not setting new PIN
-      if (canCheck && !isSettingNewPin && !widget.isFromTerminal) {
-        _authenticateBiometrically();
+      if (Platform.isAndroid || Platform.isIOS) {
+        bool canCheck = await auth.canCheckBiometrics || await auth.isDeviceSupported();
+        setState(() {
+          _canCheckBiometrics = canCheck;
+        });
+        
+        if (canCheck && !isSettingNewPin && !widget.isFromTerminal) {
+          _authenticateBiometrically();
+        }
       }
     } catch (e) {
-      print("Check biometrics error: $e");
+      debugPrint("Check biometrics error: $e");
     }
   }
 
   void _showCardScanner() {
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      Get.snackbar("Eslatma", "Kamera orqali skanerlash faqat mobil ilovada mavjud. Iltimos, karta o'quvchi qurilmadan foydalaning.",
+        backgroundColor: Colors.orange, colorText: Colors.white);
+      return;
+    }
+
     Get.to(() => Scaffold(
       appBar: AppBar(title: const Text("Kartani skanerlang")),
       body: MobileScanner(
@@ -95,7 +100,6 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
   }
 
   Future<void> _handleCardLogin(String cardId) async {
-    // Professional feedback: Vibrate and show overlay
     if (await Vibration.hasVibrator() ?? false) {
       Vibration.vibrate(duration: 100);
     }
@@ -105,14 +109,13 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
         try {
           final response = await ApiService().loginWithNfc(
             cardId,
-            deviceName: "${Platform.operatingSystem} ${Platform.isAndroid ? 'Android' : 'iOS'}",
+            deviceName: "${Platform.operatingSystem} Terminal",
           );
           
           if (response['user'] != null) {
             pos.setCurrentUser(response['user']);
             pos.authenticatePin(true);
             
-            // Show success animation/feedback
             Get.snackbar(
               "Muvaffaqiyatli", 
               "Karta orqali kirildi: ${response['user']['name']}", 
@@ -165,7 +168,6 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
       );
 
       if (authenticated) {
-        // If authenticated, we use the stored PIN to log in
         if (pos.pinCode.value != null) {
           setState(() {
             _enteredPin = pos.pinCode.value!;
@@ -177,7 +179,7 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
         }
       }
     } catch (e) {
-      print("Auth error: $e");
+      debugPrint("Auth error: $e");
     }
   }
 
@@ -207,7 +209,6 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
         final userId = widget.selectedUser['id'].toString();
         final response = await ApiService().loginWithPin(userId, _enteredPin);
         
-        // Save user to controller
         Get.find<POSController>().setCurrentUser(response['user']);
         pos.authenticatePin(true);
         
@@ -283,8 +284,6 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
       onKeyEvent: (KeyEvent event) {
         if (event is KeyDownEvent) {
           final now = DateTime.now();
-          
-          // Clear buffer if gap between keys is too long (manual typing vs reader)
           if (_lastKeyPressTime != null && now.difference(_lastKeyPressTime!).inMilliseconds > 100) {
             _keyboardBuffer = "";
           }
@@ -309,129 +308,129 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
           child: Column(
             children: [
               Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 400,
-                        margin: const EdgeInsets.symmetric(horizontal: 24),
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(32),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 30,
-                              offset: const Offset(0, 15),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Column(
-                              children: [
-                                _buildHeaderIcon(),
-                            if (!isSettingNewPin)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: ElevatedButton.icon(
-                                  onPressed: _showCardScanner,
-                                  icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
-                                  label: const Text("Karta orqali kirish"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue.withOpacity(0.1),
-                                    foregroundColor: Colors.blue,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                  ),
-                                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 400,
+                          margin: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(32),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 30,
+                                offset: const Offset(0, 15),
                               ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              titleText,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF1A1A1A),
-                                letterSpacing: -0.5,
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Column(
+                                children: [
+                                  _buildHeaderIcon(),
+                                  if (!isSettingNewPin && (Platform.isAndroid || Platform.isIOS))
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 12),
+                                      child: ElevatedButton.icon(
+                                        onPressed: _showCardScanner,
+                                        icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+                                        label: const Text("Karta orqali kirish"),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.blue.withOpacity(0.1),
+                                          foregroundColor: Colors.blue,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              subtitleText,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF6B7280),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                            _buildPinIndicators(),
-                            const SizedBox(height: 32),
-                            _buildKeypad(),
-                            const SizedBox(height: 24),
-                            TextButton(
-                              onPressed: () {},
-                              child: Text(
-                                'forgot_pin'.tr,
+                              const SizedBox(height: 24),
+                              Text(
+                                titleText,
+                                textAlign: TextAlign.center,
                                 style: const TextStyle(
-                                  color: Color(0xFF9CA3AF),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1A1A1A),
+                                  letterSpacing: -0.5,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextButton.icon(
-                              onPressed: () => pos.logout(),
-                              icon: const Icon(Icons.logout_rounded, size: 16, color: Colors.redAccent),
-                              label: const Text(
-                                'Tizimdan chiqish',
-                                style: TextStyle(
-                                  color: Colors.redAccent,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(height: 8),
+                              Text(
+                                subtitleText,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
                                   fontSize: 14,
+                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            ),
-                            if (widget.isFromTerminal) ...[
-                              const SizedBox(height: 16),
-                              TextButton.icon(
-                                onPressed: _showQrDialog,
-                                icon: const Icon(Icons.qr_code_2, color: Color(0xFFFF9500), size: 18),
-                                label: const Text(
-                                  'Sozlash uchun QR kod',
-                                  style: TextStyle(
-                                    color: Color(0xFFFF9500),
-                                    fontWeight: FontWeight.bold,
+                              const SizedBox(height: 32),
+                              _buildPinIndicators(),
+                              const SizedBox(height: 32),
+                              _buildKeypad(),
+                              const SizedBox(height: 24),
+                              TextButton(
+                                onPressed: () {},
+                                child: Text(
+                                  'forgot_pin'.tr,
+                                  style: const TextStyle(
+                                    color: Color(0xFF9CA3AF),
+                                    fontWeight: FontWeight.w600,
                                     fontSize: 13,
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: 8),
+                              TextButton.icon(
+                                onPressed: () => pos.logout(),
+                                icon: const Icon(Icons.logout_rounded, size: 16, color: Colors.redAccent),
+                                label: const Text(
+                                  'Tizimdan chiqish',
+                                  style: TextStyle(
+                                    color: Colors.redAccent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              if (widget.isFromTerminal) ...[
+                                const SizedBox(height: 16),
+                                TextButton.icon(
+                                  onPressed: _showQrDialog,
+                                  icon: const Icon(Icons.qr_code_2, color: Color(0xFFFF9500), size: 18),
+                                  label: const Text(
+                                    'Sozlash uchun QR kod',
+                                    style: TextStyle(
+                                      color: Color(0xFFFF9500),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                      _buildFooter(),
-                    ],
+                        _buildFooter(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
-  }
   }
 
   void _showQrDialog() {
