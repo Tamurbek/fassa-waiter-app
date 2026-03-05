@@ -56,7 +56,7 @@ class PrinterService {
           bytes += _row(generator, item['name'], '${item['qty']} x ${_formatPrice(item['price'])}');
         }
         bytes += generator.hr();
-        bytes += _row(generator, 'JAMI:', _formatPrice(order['total']), bold: true);
+        bytes += _row(generator, 'JAMI:', _formatPrice(order['total']), styles: const PosStyles(bold: true));
       } else {
         for (int i = 0; i < layout.length; i++) {
           var element = layout[i];
