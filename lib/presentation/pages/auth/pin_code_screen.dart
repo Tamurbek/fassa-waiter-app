@@ -10,6 +10,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_auth_android/local_auth_android.dart';
 import 'package:local_auth_darwin/local_auth_darwin.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:vibration/vibration.dart';
 
@@ -37,6 +38,9 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
   late bool isSettingNewPin;
   final LocalAuthentication auth = LocalAuthentication();
   bool _canCheckBiometrics = false;
+  final FocusNode _keyboardFocusNode = FocusNode();
+  String _keyboardBuffer = "";
+  DateTime? _lastKeyPressTime;
 
   @override
   void initState() {
@@ -52,6 +56,7 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
 
   @override
   void dispose() {
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -272,12 +277,38 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
       ? (_isConfirming ? "confirm_pin_msg".tr : "set_pin_msg".tr)
       : "pin_subtitle".tr;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F7FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
+    return KeyboardListener(
+      focusNode: _keyboardFocusNode,
+      autofocus: true,
+      onKeyEvent: (KeyEvent event) {
+        if (event is KeyDownEvent) {
+          final now = DateTime.now();
+          
+          // Clear buffer if gap between keys is too long (manual typing vs reader)
+          if (_lastKeyPressTime != null && now.difference(_lastKeyPressTime!).inMilliseconds > 100) {
+            _keyboardBuffer = "";
+          }
+          _lastKeyPressTime = now;
+
+          if (event.logicalKey == LogicalKeyboardKey.enter) {
+            if (_keyboardBuffer.isNotEmpty) {
+              _handleCardLogin(_keyboardBuffer);
+              _keyboardBuffer = "";
+            }
+          } else {
+            final String? char = event.character;
+            if (char != null) {
+              _keyboardBuffer += char;
+            }
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF3F7FA),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Center(
@@ -400,6 +431,7 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
         ),
       ),
     );
+  }
   }
 
   void _showQrDialog() {
