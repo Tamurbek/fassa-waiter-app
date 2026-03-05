@@ -8,6 +8,7 @@ import 'orders_screen.dart';
 import 'settings_screen.dart';
 import 'table_selection_screen.dart';
 import 'stop_list_page.dart';
+import '../../theme/app_theme.dart';
 
 class MainNavigationScreen extends StatelessWidget {
   const MainNavigationScreen({super.key});
@@ -66,7 +67,7 @@ class MainNavigationScreen extends StatelessWidget {
           desktop: Scaffold(
             body: Row(
               children: [
-                _buildPremiumSidebar(currentIndex, filteredMenu, pos),
+                _buildPremiumSidebar(context, currentIndex, filteredMenu, pos),
                 Expanded(
                   child: IndexedStack(
                     index: currentIndex.value,
@@ -93,12 +94,10 @@ class MainNavigationScreen extends StatelessWidget {
     ));
   }
 
-  Widget _buildPremiumSidebar(RxInt currentIndex, List<Map<String, dynamic>> items, POSController pos) {
-    return Builder(
-      builder: (context) {
-        return Container(
-          width: 240,
-          color: Theme.of(context).cardColor,
+  Widget _buildPremiumSidebar(BuildContext context, RxInt currentIndex, List<Map<String, dynamic>> items, POSController pos) {
+    return Container(
+      width: 240,
+      color: Theme.of(context).cardColor,
       child: Column(
         children: [
           Padding(
@@ -143,14 +142,14 @@ class MainNavigationScreen extends StatelessWidget {
                       children: [
                         Icon(item['icon'] as IconData, color: isSel ? const Color(0xFFFF9500) : const Color(0xFF9CA3AF), size: 22),
                         const SizedBox(width: 12),
-                          Text(
-                            item['label'] as String,
-                            style: TextStyle(
-                              color: isSel ? const Color(0xFFFF9500) : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                              fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                              fontSize: 14,
-                            ),
+                        Text(
+                          item['label'] as String,
+                          style: TextStyle(
+                            color: isSel ? const Color(0xFFFF9500) : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                            fontSize: 14,
                           ),
+                        ),
                       ],
                     ),
                   ),
@@ -158,15 +157,13 @@ class MainNavigationScreen extends StatelessWidget {
               },
             ),
           ),
-          _buildSidebarProfile(pos),
+          _buildSidebarProfile(context, pos),
         ],
       ),
     );
   }
-);
-}
 
-  Widget _buildSidebarProfile(POSController pos) {
+  Widget _buildSidebarProfile(BuildContext context, POSController pos) {
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.all(16),

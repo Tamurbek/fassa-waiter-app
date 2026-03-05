@@ -25,11 +25,11 @@ class SettingsScreen extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              _buildProfileCard(pos),
+              _buildProfileCard(context, pos),
               const SizedBox(height: 32),
               
               _buildSectionLabel("Appearance & System"),
-              _buildSettingsCard([
+              _buildSettingsCard(context, [
                 Obx(() => _buildToggleItem(
                   Icons.dark_mode_rounded, 
                   "Tungi rejim", 
@@ -55,7 +55,7 @@ class SettingsScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
               _buildSectionLabel("system".tr),
-              _buildSettingsCard([
+              _buildSettingsCard(context, [
                 _buildActionItem(
                   Icons.language_rounded, 
                   "language".tr, 
@@ -78,7 +78,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileCard(POSController pos) {
+  Widget _buildProfileCard(BuildContext context, POSController pos) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -156,7 +156,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingsCard(List<Widget> children) {
+  Widget _buildSettingsCard(BuildContext context, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
