@@ -1,4 +1,4 @@
-name: Build Waiter App (Android)
+name: Build Waiter App (Optimized Android)
 
 on:
   push:
@@ -16,12 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle' # Speeds up build by caching Gradle dependencies
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -37,17 +40,13 @@ jobs:
           flutter build apk --release
           flutter build appbundle --release
 
-      - name: Upload APK
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: fassa-waiter-android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Upload AppBundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: fassa-waiter-android-aab
-          path: build/app/outputs/bundle/release/app-release.aab
+          name: fassa-waiter-android-builds
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
