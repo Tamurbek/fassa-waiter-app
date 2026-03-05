@@ -15,29 +15,23 @@ mixin PrinterMixin on POSControllerState {
       if (name != null) order['waiter_name'] = name;
     }
 
-    // Terminal rejimida (kassa sifatida ulangan) → DOIM lokal chop etadi
-    final bool isTerminalMode = currentTerminal.value != null;
-
-    // Faqat terminal YO'Q va rol WAITER bo'lsa → kassaga socket orqali yuboradi
-    if (!isTerminalMode && (deviceRole.value == "WAITER" || isWaiter)) {
-      socket.emitPrintRequest({
-        'order': order,
-        'isKitchenOnly': isKitchenOnly,
-        'receiptTitle': receiptTitle,
-        'sender': currentUser.value?['name'] ?? "Waiter",
-      });
-      Get.snackbar("Chop etish yuborildi", "Kassaga yuborildi", 
-        backgroundColor: Colors.blue.withOpacity(0.8), 
-        colorText: Colors.white,
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(10),
-      );
-      return;
-    }
-
-    // Terminal rejimi yoki Cashier/Admin → bevosita chop etadi
-    await printLocally(order, isKitchenOnly: isKitchenOnly, receiptTitle: receiptTitle);
+    // Force all printing to go through the central POS terminal via Socket
+    socket.emitPrintRequest({
+      'order': order,
+      'isKitchenOnly': isKitchenOnly,
+      'receiptTitle': receiptTitle,
+      'sender': currentUser.value?['name'] ?? "Waiter",
+    });
+    
+    Get.snackbar(
+      "Chop etish yuborildi", 
+      "Kassaga yuborildi", 
+      backgroundColor: Colors.blue.withOpacity(0.8), 
+      colorText: Colors.white,
+      duration: const Duration(seconds: 1),
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(10),
+    );
   }
 
   Future<void> printLocally(Map<String, dynamic> order, {bool isKitchenOnly = false, String? receiptTitle}) async {
