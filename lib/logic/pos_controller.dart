@@ -222,7 +222,6 @@ class POSController extends POSControllerState with
         
         await printLocally(order, isKitchenOnly: isKitchenOnly, receiptTitle: data['receiptTitle']);
         
-        // If it was a persistent job from DB, acknowledge it
         if (data['job_id'] != null) {
           socket.emitPrintAck(data['job_id']);
         }
@@ -233,7 +232,6 @@ class POSController extends POSControllerState with
       if (currentUser.value?['id']?.toString() == data['waiter_id'].toString()) {
         _playAlertSound();
         
-        // Vibrate if supported
         if (await Vibration.hasVibrator() ?? false) {
           Vibration.vibrate(duration: 2000, amplitude: 255);
         }
@@ -293,7 +291,7 @@ class POSController extends POSControllerState with
       }
 
       final orderData = {
-        "id": uuid.v4(), // Client-side ID for offline sync
+        "id": uuid.v4(),
         "table_number": currentMode.value == "Dine-in" ? selectedTable.value : null,
         "type": currentMode.value.toUpperCase().replaceAll("-", "_"),
         "is_paid": isPaid,
@@ -432,7 +430,6 @@ class POSController extends POSControllerState with
 
       consolidatedList = grouped.values.toList();
 
-      // track cancellations for receipt display
       totalSentQty.forEach((groupKey, sentQty) {
         final int currentQty = grouped[groupKey]?['qty'] ?? 0;
         if (currentQty < sentQty) {
@@ -473,9 +470,8 @@ class POSController extends POSControllerState with
         orderToPrint['mode'] = currentMode.value;
         orderToPrint['table'] = currentMode.value == "Dine-in" ? selectedTable.value : "-";
         orderToPrint['details'] = consolidatedList;
-        orderToPrint['cancelled_items'] = cancelledItems; // Pass to printer
+        orderToPrint['cancelled_items'] = cancelledItems;
         
-        // Update allOrders with new details
         allOrders[index] = orderToPrint;
 
         final orderId = editingOrderId.value?.toString();
@@ -491,13 +487,8 @@ class POSController extends POSControllerState with
         saveAllOrders();
         return true;
       }
-      
-      Get.snackbar("Xatolik", "Buyurtma topilmadi. Iltimos, ma'lumotlarni yangilang.", 
-          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
       return false;
     } catch (e) { 
-      Get.snackbar("Xato", "O'zgarishlarni saqlashda xatolik: $e", 
-          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
       return false; 
     }
   }
@@ -506,20 +497,14 @@ class POSController extends POSControllerState with
     if (table.isNotEmpty) {
       bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
       if (!isWithinGeofence.value && isWaiter && !isDesktop) {
-        Get.snackbar(
-          "Hudud cheklovi", 
-          "Stol tanlash uchun kafe hududida bo'lishingiz kerak.",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        Get.snackbar("Hudud cheklovi", "Stol tanlash uchun kafe hududida bo'lishingiz kerak.", backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
     }
     
-    editingOrderId.value = null; // Ensure we're not in edit mode for a new table
+    editingOrderId.value = null;
     isOrderModified.value = false;
-    currentOrder.clear(); // Clear any previous cart content
+    currentOrder.clear();
     
     if (selectedTable.value.isNotEmpty) socket.emitTableUnlock(selectedTable.value);
     selectedTable.value = table;

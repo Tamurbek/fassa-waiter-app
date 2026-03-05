@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../theme/app_colors.dart';
 import '../../logic/pos_controller.dart';
+import '../../theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -9,6 +11,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final POSController pos = Get.find<POSController>();
+    final storage = GetStorage();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -17,7 +20,6 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        automaticallyImplyLeading: true,
       ),
       body: Center(
         child: ConstrainedBox(
@@ -28,7 +30,7 @@ class SettingsScreen extends StatelessWidget {
               _buildProfileCard(context, pos),
               const SizedBox(height: 32),
               
-              _buildSectionLabel("Appearance & System"),
+              _buildSectionLabel("Appearance"),
               _buildSettingsCard(context, [
                 Obx(() => _buildToggleItem(
                   Icons.dark_mode_rounded, 
@@ -36,22 +38,7 @@ class SettingsScreen extends StatelessWidget {
                   pos.isDarkMode.value, 
                   (val) => pos.toggleTheme()
                 )),
-                Obx(() => _buildToggleItem(
-                  Icons.fullscreen_rounded, 
-                  "To'liq ekran", 
-                  pos.isFullScreen.value, 
-                  (val) => pos.toggleFullScreen()
-                )),
-                Obx(() => _buildToggleItem(
-                  Icons.power_settings_new_rounded, 
-                  "Avto-yuklash (boot)", 
-                  pos.isAutoStart.value, 
-                  (val) => pos.toggleAutoStart()
-                )),
               ]),
-
-              const SizedBox(height: 24),
-
 
               const SizedBox(height: 24),
               _buildSectionLabel("system".tr),
@@ -62,7 +49,6 @@ class SettingsScreen extends StatelessWidget {
                   trailingText: Get.locale?.languageCode == 'uz' ? "O'zbekcha" : (Get.locale?.languageCode == 'ru' ? "Русский" : "English"), 
                   onTap: () => _showLanguageSwitcher(context)
                 ),
-
                 _buildActionItem(Icons.info_rounded, "app_version".tr, trailingText: "v1.0.5", onTap: () {}),
               ]),
               
@@ -97,7 +83,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                pos.restaurantName.value.isNotEmpty ? pos.restaurantName.value.substring(0, 1).toUpperCase() : "C",
+                pos.restaurantName.value.isNotEmpty ? pos.restaurantName.value.substring(0, 1).toUpperCase() : "W",
                 style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
               ),
             ),
@@ -109,35 +95,7 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 Obx(() => Text(pos.restaurantName.value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.displayLarge?.color))),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 14, color: Color(0xFF9CA3AF)),
-                    const SizedBox(width: 4),
-                    Obx(() => Text(pos.restaurantAddress.value, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13, fontWeight: FontWeight.w500))),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Obx(() {
-                  final isVip = pos.isVip.value;
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF7ED),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.stars_rounded, size: 14, color: Color(0xFFFF9500)),
-                        const SizedBox(width: 6),
-                        Text(
-                          isVip ? "VIP — CHEKSIZ OBUNA" : "STANDART PLAN",
-                          style: const TextStyle(color: Color(0xFFFF9500), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                Text(pos.currentUser.value?['name'] ?? "Waiter", style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
