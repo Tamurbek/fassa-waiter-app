@@ -150,6 +150,8 @@ class POSController extends POSControllerState with
     receiptHeader.value = storage.read('receipt_header') ?? "";
     receiptFooter.value = storage.read('receipt_footer') ?? "Xaridingiz uchun rahmat!";
     showLogo.value = storage.read('show_logo') ?? true;
+    instagramLink.value = storage.read('instagram_link') ?? "";
+    telegramLink.value = storage.read('telegram_link') ?? "";
   }
 
   void _setupSocketListenersDetailed() {

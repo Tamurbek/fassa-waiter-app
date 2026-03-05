@@ -232,11 +232,17 @@ class PrinterService {
         }
       }
       
-      if (posController.instagram.value.isNotEmpty) {
+      if (posController.instagramLink.value.isNotEmpty) {
+        bytes += generator.qrcode(posController.instagramLink.value, size: QRSize.size4);
+        bytes += generator.text(_normalizeString('Instagram'), styles: const PosStyles(align: PosAlign.center, height: PosTextSize.size1, width: PosTextSize.size1));
+      } else if (posController.instagram.value.isNotEmpty) {
         bytes += generator.text(_normalizeString('Instagram: ${posController.instagram.value}'), styles: const PosStyles(align: PosAlign.center));
       }
       
-      if (posController.telegram.value.isNotEmpty) {
+      if (posController.telegramLink.value.isNotEmpty) {
+        bytes += generator.qrcode(posController.telegramLink.value, size: QRSize.size4);
+        bytes += generator.text(_normalizeString('Telegram'), styles: const PosStyles(align: PosAlign.center, height: PosTextSize.size1, width: PosTextSize.size1));
+      } else if (posController.telegram.value.isNotEmpty) {
         bytes += generator.text(_normalizeString('Telegram: ${posController.telegram.value}'), styles: const PosStyles(align: PosAlign.center));
       }
       bytes += generator.feed(3);

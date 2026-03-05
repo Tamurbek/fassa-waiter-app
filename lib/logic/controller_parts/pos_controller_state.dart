@@ -93,6 +93,8 @@ abstract class POSControllerState extends GetxController {
   var wifiPassword = "".obs;
   var instagram = "".obs;
   var telegram = "".obs;
+  var instagramLink = "".obs;
+  var telegramLink = "".obs;
   var allowWaiterMobileOrders = true.obs;
   var workStartTime = "00:00".obs;
   var workEndTime = "23:59".obs;
