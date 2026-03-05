@@ -143,6 +143,32 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> loginWithNfc(String nfcId, {String? deviceId, String? deviceName}) async {
+    try {
+      final response = await _dio.post('/auth/login/nfc', data: {
+        'nfc_id': nfcId,
+        'device_id': deviceId ?? 'nfc_device_default',
+        'device_name': deviceName ?? 'NFC Terminal',
+      });
+      _token = response.data['access_token'];
+      _storage.write('access_token', _token);
+      return response.data;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> updateNfcCard(String userId, String nfcId) async {
+    try {
+      final response = await _dio.patch('/users/$userId/nfc', data: {
+        'nfc_id': nfcId,
+      });
+      return response.data;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<List<dynamic>> getTerminalStaff() async {
     try {
       // Use terminal token specifically for this request if available

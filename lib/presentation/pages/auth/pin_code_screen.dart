@@ -6,6 +6,10 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/responsive.dart';
 import '../main_navigation_screen.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:nfc_manager/nfc_manager.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:local_auth_android/local_auth_android.dart';
+import 'package:local_auth_darwin/local_auth_darwin.dart';
 
 class PinCodeScreen extends StatefulWidget {
   final bool isSettingNewPin;
@@ -29,6 +33,9 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
   String _firstPin = ""; 
   bool _isConfirming = false;
   late bool isSettingNewPin;
+  final LocalAuthentication auth = LocalAuthentication();
+  bool _canCheckBiometrics = false;
+  bool _isNfcAvailable = false;
 
   @override
   void initState() {
@@ -38,6 +45,152 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
       if (Get.arguments['isSettingNewPin'] != null) {
         isSettingNewPin = Get.arguments['isSettingNewPin'];
       }
+    }
+    _checkBiometrics();
+    _initNfc();
+  }
+
+  @override
+  void dispose() {
+    NfcManager.instance.stopSession();
+    super.dispose();
+  }
+
+  Future<void> _checkBiometrics() async {
+    try {
+      bool canCheck = await auth.canCheckBiometrics || await auth.isDeviceSupported();
+      setState(() {
+        _canCheckBiometrics = canCheck;
+      });
+      
+      // Auto-trigger biometrics if allowed and not setting new PIN
+      if (canCheck && !isSettingNewPin && !widget.isFromTerminal) {
+        _authenticateBiometrically();
+      }
+    } catch (e) {
+      print("Check biometrics error: $e");
+    }
+  }
+
+  Future<void> _initNfc() async {
+    try {
+      _isNfcAvailable = await NfcManager.instance.isAvailable();
+      if (_isNfcAvailable) {
+        _startNfcSession();
+      }
+    } catch (e) {
+      print("NFC Error: $e");
+    }
+  }
+
+  void _startNfcSession() {
+    NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
+      try {
+        final ndef = Ndef.from(tag);
+        // We can get identifier (ID) from tag.data
+        String? nfcId;
+        
+        // Extract ID from tag data
+        if (tag.data.containsKey('nfca')) {
+          nfcId = (tag.data['nfca']['identifier'] as List).map((e) => e.toRadixString(16).padLeft(2, '0')).join(':');
+        } else if (tag.data.containsKey('mifareclassic')) {
+          nfcId = (tag.data['mifareclassic']['identifier'] as List).map((e) => e.toRadixString(16).padLeft(2, '0')).join(':');
+        }
+        
+        if (nfcId != null) {
+          debugPrint("NFC Tag Discovered: $nfcId");
+          _handleNfcLogin(nfcId);
+        }
+      } catch (e) {
+        debugPrint("NFC Read Error: $e");
+      }
+    });
+  }
+
+  Future<void> _handleNfcLogin(String nfcId) async {
+    // Professional feedback: Vibrate and show overlay
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 100);
+    }
+
+    Get.showOverlay(
+      asyncFunction: () async {
+        try {
+          final response = await ApiService().loginWithNfc(
+            nfcId,
+            deviceName: "${Platform.operatingSystem} ${Platform.isAndroid ? 'Android' : 'iOS'}",
+          );
+          
+          if (response['user'] != null) {
+            pos.setCurrentUser(response['user']);
+            pos.authenticatePin(true);
+            
+            // Show success animation/feedback
+            Get.snackbar(
+              "Muvaffaqiyatli", 
+              "Karta orqali kirildi: ${response['user']['name']}", 
+              backgroundColor: Colors.green, 
+              colorText: Colors.white,
+              icon: const Icon(Icons.check_circle, color: Colors.white),
+              snackPosition: SnackPosition.TOP,
+            );
+            
+            Get.offAll(() => const MainNavigationScreen());
+          }
+        } catch (e) {
+          debugPrint("NFC Login Error: $e");
+          Get.snackbar(
+            "Xato", 
+            "Ushbu NFC karta tizimga biriktirilmagan", 
+            backgroundColor: Colors.red, 
+            colorText: Colors.white,
+            icon: const Icon(Icons.error_outline, color: Colors.white),
+          );
+        }
+      },
+      opacity: 0.1,
+      loadingWidget: const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text("Karta tekshirilmoqda...", style: TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _authenticateBiometrically() async {
+    try {
+      bool authenticated = await auth.authenticate(
+        localizedReason: 'Tizimga kirish uchun biometrik ma\'lumotni tasdiqlang',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+
+      if (authenticated) {
+        // If authenticated, we use the stored PIN to log in
+        if (pos.pinCode.value != null) {
+          setState(() {
+            _enteredPin = pos.pinCode.value!;
+          });
+          _handlePinComplete();
+        } else {
+          Get.snackbar("Eslatma", "PIN kod sozlanmagan. Iltimos, birinchi marta PIN kiriting.", 
+            backgroundColor: Colors.orange, colorText: Colors.white);
+        }
+      }
+    } catch (e) {
+      print("Auth error: $e");
     }
   }
 
@@ -167,7 +320,36 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildHeaderIcon(),
+                            Column(
+                              children: [
+                                _buildHeaderIcon(),
+                                if (_isNfcAvailable && !isSettingNewPin) ...[
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.nfc, size: 14, color: Colors.blue),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          "NFC karta tayyor",
+                                          style: TextStyle(
+                                            color: Colors.blue,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                             const SizedBox(height: 24),
                             Text(
                               titleText,
@@ -372,7 +554,10 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(width: 72), 
+            if (_canCheckBiometrics && !isSettingNewPin)
+              _buildKeypadButton('', isBiometric: true)
+            else
+              const SizedBox(width: 72),
             const SizedBox(width: 12),
             _buildKeypadButton('0'),
             const SizedBox(width: 12),
@@ -383,12 +568,20 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
     );
   }
 
-  Widget _buildKeypadButton(String digit, {bool isBackspace = false}) {
+  Widget _buildKeypadButton(String digit, {bool isBackspace = false, bool isBiometric = false}) {
     return Material(
       color: const Color(0xFFF9FAFB),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: () => isBackspace ? _onBackspace() : _onDigitPress(digit),
+        onTap: () {
+          if (isBackspace) {
+            _onBackspace();
+          } else if (isBiometric) {
+            _authenticateBiometrically();
+          } else {
+            _onDigitPress(digit);
+          }
+        },
         borderRadius: BorderRadius.circular(16),
         child: Container(
           width: 72,
@@ -399,14 +592,16 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
           child: Center(
             child: isBackspace
                 ? const Icon(Icons.backspace_outlined, color: Color(0xFF4B5563), size: 22)
-                : Text(
+                : (isBiometric 
+                   ? const Icon(Icons.fingerprint_rounded, color: Color(0xFFFF9500), size: 32)
+                   : Text(
                     digit,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1A1A1A),
                     ),
-                  ),
+                  )),
           ),
         ),
       ),

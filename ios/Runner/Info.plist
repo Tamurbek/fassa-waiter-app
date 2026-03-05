@@ -59,5 +59,14 @@
 			<string>fetch</string>
 			<string>remote-notification</string>
 		</array>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Tizimga kirish uchun Face ID dan foydalanishga ruxsat bering</string>
+		<key>NFCReaderUsageDescription</key>
+		<string>NFC karta orqali tizimga kirish uchun ruxsat bering</string>
+		<key>com.apple.developer.nfc.readersession.formats</key>
+		<array>
+			<string>NDEF</string>
+			<string>TAG</string>
+		</array>
 	</dict>
 </plist>
