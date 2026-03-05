@@ -115,6 +115,9 @@ abstract class POSControllerState extends GetxController {
   var enableKitchenPrint = true.obs;
   var enableBillPrint = true.obs;
   var enablePaymentPrint = true.obs;
+  var isDarkMode = false.obs;
+  var isFullScreen = false.obs;
+  var isAutoStart = false.obs;
 
   var isOrdersTableView = false.obs;
 

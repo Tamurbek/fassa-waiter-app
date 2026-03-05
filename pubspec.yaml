@@ -62,6 +62,7 @@ dependencies:
   uuid: ^4.5.3
   connectivity_plus: ^7.0.0
   local_auth: ^2.3.0
+  auto_start_flutter: ^0.7.0
 
 dev_dependencies:
   flutter_test:

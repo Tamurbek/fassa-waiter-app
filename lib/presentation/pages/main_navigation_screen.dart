@@ -42,7 +42,7 @@ class MainNavigationScreen extends StatelessWidget {
             bottomNavigationBar: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))],
               ),
               child: SafeArea(
@@ -53,6 +53,14 @@ class MainNavigationScreen extends StatelessWidget {
                   }),
                 ),
               ),
+            ),
+            floatingActionButton: FloatingActionButton.small(
+              onPressed: () => pos.toggleFullScreen(),
+              backgroundColor: Theme.of(context).cardColor,
+              child: Obx(() => Icon(
+                pos.isFullScreen.value ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
+                color: Theme.of(context).iconTheme.color,
+              )),
             ),
           ),
           desktop: Scaffold(
@@ -86,9 +94,11 @@ class MainNavigationScreen extends StatelessWidget {
   }
 
   Widget _buildPremiumSidebar(RxInt currentIndex, List<Map<String, dynamic>> items, POSController pos) {
-    return Container(
-      width: 240,
-      color: Colors.white,
+    return Builder(
+      builder: (context) {
+        return Container(
+          width: 240,
+          color: Theme.of(context).cardColor,
       child: Column(
         children: [
           Padding(
@@ -106,7 +116,7 @@ class MainNavigationScreen extends StatelessWidget {
                   children: [
                     Obx(() => Text(
                       pos.restaurantName.value.isEmpty ? "Fassa" : pos.restaurantName.value, 
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF1A1A1A))
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Theme.of(context).textTheme.displayLarge?.color)
                     )),
                     Text("waiter_app".tr, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12, fontWeight: FontWeight.bold)),
                   ],
@@ -126,21 +136,21 @@ class MainNavigationScreen extends StatelessWidget {
                     margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: isSel ? const Color(0xFFFFF7ED) : Colors.transparent,
+                      color: isSel ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
                         Icon(item['icon'] as IconData, color: isSel ? const Color(0xFFFF9500) : const Color(0xFF9CA3AF), size: 22),
                         const SizedBox(width: 12),
-                        Text(
-                          item['label'] as String,
-                          style: TextStyle(
-                            color: isSel ? const Color(0xFFFF9500) : const Color(0xFF6B7280),
-                            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                            fontSize: 14,
+                          Text(
+                            item['label'] as String,
+                            style: TextStyle(
+                              color: isSel ? const Color(0xFFFF9500) : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                              fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -153,13 +163,15 @@ class MainNavigationScreen extends StatelessWidget {
       ),
     );
   }
+);
+}
 
   Widget _buildSidebarProfile(POSController pos) {
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -175,7 +187,7 @@ class MainNavigationScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(pos.currentUser.value?['name'] ?? "Unknown", 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1A1A1A)),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).textTheme.bodyLarge?.color),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(pos.currentUser.value?['role'] ?? "Noma'lum", 
@@ -187,6 +199,11 @@ class MainNavigationScreen extends StatelessWidget {
             icon: const Icon(Icons.lock_person_rounded, color: AppColors.primary),
             tooltip: "Terminalni qulflash",
             onPressed: () => pos.lockTerminal(),
+          ),
+          IconButton(
+            icon: Obx(() => Icon(pos.isFullScreen.value ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded, color: AppColors.primary)),
+            tooltip: "To'liq ekran",
+            onPressed: () => pos.toggleFullScreen(),
           ),
         ],
       ),

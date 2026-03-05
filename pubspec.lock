@@ -89,6 +89,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.2.1"
+  auto_start_flutter:
+    dependency: "direct main"
+    description:
+      name: auto_start_flutter
+      sha256: "4deef0886604db923ea6ea027bc86fe16821efd3483736c2718892bb9a9c6f38"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.0"
   boolean_selector:
     dependency: transitive
     description:
@@ -768,14 +776,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.17.4"
-  nfc_manager:
-    dependency: "direct main"
-    description:
-      name: nfc_manager
-      sha256: f5be75e90f8f2bff3ee49fbd7ef65bdd4a86ee679c2412e71ab2846a8cff8c59
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.5.0"
   nm:
     dependency: transitive
     description:

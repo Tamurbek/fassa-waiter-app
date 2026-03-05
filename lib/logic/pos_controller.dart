@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:auto_start_flutter/auto_start_flutter.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 import 'dart:io';
@@ -128,6 +130,17 @@ class POSController extends POSControllerState with
     enableKitchenPrint.value = storage.read('enable_kitchen_print') ?? true;
     enableBillPrint.value = storage.read('enable_bill_print') ?? true;
     enablePaymentPrint.value = storage.read('enable_payment_print') ?? true;
+    isDarkMode.value = storage.read('is_dark_mode') ?? false;
+    isFullScreen.value = storage.read('is_full_screen') ?? false;
+    isAutoStart.value = storage.read('is_auto_start') ?? false;
+    
+    if (isDarkMode.value) {
+      Get.changeTheme(AppTheme.darkTheme);
+    }
+
+    if (isFullScreen.value) {
+      _applyFullScreen(true);
+    }
 
     // Load Feature Flags
     isGeofencingEnabled.value = storage.read('is_geofencing_enabled') ?? true;
@@ -515,4 +528,36 @@ class POSController extends POSControllerState with
   void toggleEditMode() => isEditMode.value = !isEditMode.value;
   void setDeviceRole(String? role) { deviceRole.value = role; storage.write('device_role', role); }
   void setWaiterCafeId(String? cafeId) { waiterCafeId.value = cafeId; storage.write('waiter_cafe_id', cafeId); }
+
+  void toggleTheme() {
+    isDarkMode.value = !isDarkMode.value;
+    storage.write('is_dark_mode', isDarkMode.value);
+    Get.changeTheme(isDarkMode.value ? AppTheme.darkTheme : AppTheme.lightTheme);
+  }
+
+  void toggleFullScreen() async {
+    isFullScreen.value = !isFullScreen.value;
+    storage.write('is_full_screen', isFullScreen.value);
+    _applyFullScreen(isFullScreen.value);
+  }
+
+  void _applyFullScreen(bool value) async {
+    if (value) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+  }
+
+  void toggleAutoStart() async {
+    isAutoStart.value = !isAutoStart.value;
+    storage.write('is_auto_start', isAutoStart.value);
+    
+    if (Platform.isAndroid) {
+      if (isAutoStart.value) {
+        await isAutoStartAvailable;
+        await getAutoStartPermission();
+      }
+    }
+  }
 }
