@@ -96,6 +96,8 @@ abstract class POSControllerState extends GetxController {
   var instagramLink = "".obs;
   var telegramLink = "".obs;
   var allowWaiterMobileOrders = true.obs;
+  var receiptLayout = <Map<String, dynamic>>[].obs;
+  var kitchenReceiptLayout = <Map<String, dynamic>>[].obs;
   var workStartTime = "00:00".obs;
   var workEndTime = "23:59".obs;
 

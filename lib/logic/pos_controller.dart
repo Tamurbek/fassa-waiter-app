@@ -152,6 +152,12 @@ class POSController extends POSControllerState with
     showLogo.value = storage.read('show_logo') ?? true;
     instagramLink.value = storage.read('instagram_link') ?? "";
     telegramLink.value = storage.read('telegram_link') ?? "";
+    
+    var rl = storage.read('receipt_layout');
+    if (rl != null) receiptLayout.assignAll(List<Map<String, dynamic>>.from(rl));
+    
+    var krl = storage.read('kitchen_receipt_layout');
+    if (krl != null) kitchenReceiptLayout.assignAll(List<Map<String, dynamic>>.from(krl));
   }
 
   void _setupSocketListenersDetailed() {
