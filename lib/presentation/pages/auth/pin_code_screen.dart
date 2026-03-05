@@ -6,7 +6,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/responsive.dart';
 import '../main_navigation_screen.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:nfc_manager/nfc_manager.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_auth_android/local_auth_android.dart';
 import 'package:local_auth_darwin/local_auth_darwin.dart';
@@ -37,7 +37,6 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
   late bool isSettingNewPin;
   final LocalAuthentication auth = LocalAuthentication();
   bool _canCheckBiometrics = false;
-  bool _isNfcAvailable = false;
 
   @override
   void initState() {
@@ -49,12 +48,10 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
       }
     }
     _checkBiometrics();
-    _initNfc();
   }
 
   @override
   void dispose() {
-    NfcManager.instance.stopSession();
     super.dispose();
   }
 
@@ -74,42 +71,25 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
     }
   }
 
-  Future<void> _initNfc() async {
-    try {
-      _isNfcAvailable = await NfcManager.instance.isAvailable();
-      if (_isNfcAvailable) {
-        _startNfcSession();
-      }
-    } catch (e) {
-      print("NFC Error: $e");
-    }
+  void _showCardScanner() {
+    Get.to(() => Scaffold(
+      appBar: AppBar(title: const Text("Kartani skanerlang")),
+      body: MobileScanner(
+        onDetect: (capture) {
+          final List<Barcode> barcodes = capture.barcodes;
+          if (barcodes.isNotEmpty) {
+            final String? code = barcodes.first.rawValue;
+            if (code != null) {
+              Get.back();
+              _handleCardLogin(code);
+            }
+          }
+        },
+      ),
+    ));
   }
 
-  void _startNfcSession() {
-    NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
-      try {
-        final ndef = Ndef.from(tag);
-        // We can get identifier (ID) from tag.data
-        String? nfcId;
-        
-        // Extract ID from tag data
-        if (tag.data.containsKey('nfca')) {
-          nfcId = (tag.data['nfca']['identifier'] as List).map((e) => e.toRadixString(16).padLeft(2, '0')).join(':');
-        } else if (tag.data.containsKey('mifareclassic')) {
-          nfcId = (tag.data['mifareclassic']['identifier'] as List).map((e) => e.toRadixString(16).padLeft(2, '0')).join(':');
-        }
-        
-        if (nfcId != null) {
-          debugPrint("NFC Tag Discovered: $nfcId");
-          _handleNfcLogin(nfcId);
-        }
-      } catch (e) {
-        debugPrint("NFC Read Error: $e");
-      }
-    });
-  }
-
-  Future<void> _handleNfcLogin(String nfcId) async {
+  Future<void> _handleCardLogin(String cardId) async {
     // Professional feedback: Vibrate and show overlay
     if (await Vibration.hasVibrator() ?? false) {
       Vibration.vibrate(duration: 100);
@@ -119,7 +99,7 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
       asyncFunction: () async {
         try {
           final response = await ApiService().loginWithNfc(
-            nfcId,
+            cardId,
             deviceName: "${Platform.operatingSystem} ${Platform.isAndroid ? 'Android' : 'iOS'}",
           );
           
@@ -140,10 +120,10 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
             Get.offAll(() => const MainNavigationScreen());
           }
         } catch (e) {
-          debugPrint("NFC Login Error: $e");
+          debugPrint("Card Login Error: $e");
           Get.snackbar(
             "Xato", 
-            "Ushbu NFC karta tizimga biriktirilmagan", 
+            "Ushbu karta tizimga biriktirilmagan", 
             backgroundColor: Colors.red, 
             colorText: Colors.white,
             icon: const Icon(Icons.error_outline, color: Colors.white),
@@ -325,31 +305,21 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
                             Column(
                               children: [
                                 _buildHeaderIcon(),
-                                if (_isNfcAvailable && !isSettingNewPin) ...[
-                                  const SizedBox(height: 12),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.nfc, size: 14, color: Colors.blue),
-                                        SizedBox(width: 6),
-                                        Text(
-                                          "NFC karta tayyor",
-                                          style: TextStyle(
-                                            color: Colors.blue,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                            if (!isSettingNewPin)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: ElevatedButton.icon(
+                                  onPressed: _showCardScanner,
+                                  icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+                                  label: const Text("Karta orqali kirish"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue.withOpacity(0.1),
+                                    foregroundColor: Colors.blue,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                   ),
-                                ],
+                                ),
+                              ),
                               ],
                             ),
                             const SizedBox(height: 24),
