@@ -38,8 +38,9 @@ jobs:
           path: build/windows/x64/runner/Release/
   
   # Job 2: Android
+  build-android:
     name: Android Build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
