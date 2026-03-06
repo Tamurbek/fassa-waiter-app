@@ -40,7 +40,7 @@ jobs:
   # Job 2: Android
   build-android:
     name: Android Build
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
