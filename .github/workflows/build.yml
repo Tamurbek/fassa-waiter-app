@@ -1,4 +1,4 @@
-name: Build Waiter App (Optimized Android)
+name: Build Waiter App (Android & Windows)
 
 on:
   push:
@@ -10,7 +10,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-android:
+  # Job 1: Windows
+  build-windows:
+    name: Windows Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Upload Windows Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: fassa-waiter-windows-build
+          path: build/windows/x64/runner/Release/
+  
+  # Job 2: Android
     name: Android Build
     runs-on: ubuntu-latest
     steps:
