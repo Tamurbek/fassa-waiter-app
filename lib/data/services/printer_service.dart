@@ -162,17 +162,21 @@ class PrinterService {
       case 'ITEMS_TABLE':
         bytes += generator.hr(ch: '-');
         bytes += generator.row([
-          PosColumn(text: _normalizeString('NOMI'), width: 7, styles: styles.copyWith(bold: true)),
-          PosColumn(text: _normalizeString('SONI'), width: 2, styles: styles.copyWith(bold: true, align: PosAlign.center)),
+          PosColumn(text: _normalizeString('NOMI'), width: 4, styles: styles.copyWith(bold: true)),
           PosColumn(text: _normalizeString('NARXI'), width: 3, styles: styles.copyWith(bold: true, align: PosAlign.right)),
+          PosColumn(text: _normalizeString('SONI'), width: 2, styles: styles.copyWith(bold: true, align: PosAlign.center)),
+          PosColumn(text: _normalizeString('SUMMA'), width: 3, styles: styles.copyWith(bold: true, align: PosAlign.right)),
         ]);
         bytes += generator.hr(ch: '-');
         final items = order['details'] as List;
         for (var item in items) {
+          final qty = (item['qty'] as num).toInt();
+          final price = (item['price'] as num).toDouble();
           bytes += generator.row([
-            PosColumn(text: _normalizeString(item['name']), width: 7, styles: styles),
-            PosColumn(text: _normalizeString(item['qty'].toString()), width: 2, styles: styles.copyWith(align: PosAlign.center)),
-            PosColumn(text: _normalizeString(_formatPrice((item['price'] as num) * (item['qty'] as num))), width: 3, styles: styles.copyWith(align: PosAlign.right)),
+            PosColumn(text: _normalizeString(item['name']), width: 4, styles: styles),
+            PosColumn(text: _normalizeString(_formatPrice(price)), width: 3, styles: styles.copyWith(align: PosAlign.right)),
+            PosColumn(text: _normalizeString(qty.toString()), width: 2, styles: styles.copyWith(align: PosAlign.center)),
+            PosColumn(text: _normalizeString(_formatPrice(qty * price)), width: 3, styles: styles.copyWith(align: PosAlign.right)),
           ]);
         }
         bytes += generator.hr(ch: '-');
