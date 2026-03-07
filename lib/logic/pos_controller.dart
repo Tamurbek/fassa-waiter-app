@@ -177,6 +177,48 @@ class POSController extends POSControllerState with
   void _setupSocketListenersDetailed() {
     setupSocketListeners();
     
+    socket.onOrderStatusUpdated((data) {
+      final orderId = data['orderId']?.toString();
+      final status = data['status']?.toString().toUpperCase();
+      
+      int index = allOrders.indexWhere((o) => o['id']?.toString() == orderId);
+      if (index != -1) {
+        final order = allOrders[index];
+        final String oldStatus = order['status']?.toString() ?? "";
+        final String newStatusFormatted = status!.replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" ");
+        
+        allOrders[index]['status'] = newStatusFormatted;
+        allOrders.refresh();
+        saveAllOrders();
+
+        // Faqat "READY" bo'lganda va avval tayyor bo'lmagan bo'lsa xabar berish
+        if (status == "READY" && !oldStatus.toLowerCase().contains("ready")) {
+           bool isMyOrder = order['waiter_name'] == currentUser.value?['name'];
+           
+           // Ofitsiantga faqat o'zini buyurtmasi, Admin/Kassirga barchasi
+           if (isMyOrder || isAdmin || isCashier) {
+              _playReadySound();
+              
+              if (isMyOrder && (Platform.isAndroid || Platform.isIOS)) {
+                Vibration.vibrate(duration: 500);
+              }
+              
+              Get.snackbar(
+                "Buyurtma tayyor!",
+                "Stol: ${order['table']} buyurtmasi tayyor bo'ldi.",
+                snackPosition: SnackPosition.TOP,
+                backgroundColor: isMyOrder ? Colors.green.withOpacity(0.9) : Colors.blue.withOpacity(0.8),
+                colorText: Colors.white,
+                duration: const Duration(seconds: 4),
+                margin: const EdgeInsets.all(10),
+                borderRadius: 15,
+                icon: const Icon(Icons.check_circle, color: Colors.white),
+              );
+           }
+        }
+      }
+    });
+
     socket.onNewOrder((data) {
       int index = allOrders.indexWhere((o) => o['id'].toString() == data['id'].toString());
       if (index == -1) {
@@ -257,13 +299,16 @@ class POSController extends POSControllerState with
     });
   }
 
-  Future<void> _playAlertSound() async {
+  Future<void> _playReadySound() async {
     try {
-      await audioPlayer.play(UrlSource('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
+      // Subtle "ding" for ready status
+      await audioPlayer.play(UrlSource('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'));
     } catch (e) {
-      print("Error playing alert sound: $e");
+      print("Error playing ready sound: $e");
     }
   }
+
+  Future<void> _playAlertSound() async {
 
   Future<bool> submitOrder({bool isPaid = false}) async {
     if (isSubmitting.value) return false;
