@@ -22,18 +22,19 @@ class WelcomePage extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF9500),
+                  color: const Color(0xFF1A1A1A),
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF9500).withOpacity(0.3),
+                      color: Colors.black.withOpacity(0.3),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Icon(Icons.restaurant_rounded, color: Colors.white, size: 60),
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: Image.asset('assets/logo.png'),
                 ),
               ),
               const SizedBox(height: 48),

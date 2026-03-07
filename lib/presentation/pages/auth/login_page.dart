@@ -397,8 +397,11 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ],
         ),
-        child: const Center(
-          child: Icon(Icons.fastfood, color: Color(0xFFFF9500), size: 60),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Image.asset('assets/logo.png'),
+          ),
         ),
       ),
     );
@@ -412,8 +415,11 @@ class _LoginPageState extends State<LoginPage> {
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Center(
-        child: Icon(Icons.fastfood, color: Color(0xFFFF9500), size: 36),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Image.asset('assets/logo.png'),
+        ),
       ),
     );
   }
