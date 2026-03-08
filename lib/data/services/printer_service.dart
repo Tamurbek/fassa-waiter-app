@@ -70,10 +70,11 @@ class PrinterService {
           final price = (item['price'] as num).toDouble();
           double lineTotal = qty * price;
           
-          bytes += generator.text(_normalizeString(item['name']), styles: const PosStyles(bold: true, height: isKitchenOnly ? PosTextSize.size2 : PosTextSize.size1));
+          bytes += generator.text(_normalizeString(item['name']), styles: PosStyles(bold: true, height: isKitchenOnly ? PosTextSize.size3 : PosTextSize.size1));
           
           if (isKitchenOnly) {
-             bytes += generator.text(_normalizeString('SONI: $qty ta'), styles: const PosStyles(bold: true, height: PosTextSize.size2));
+             bytes += generator.text(_normalizeString('SONI: $qty ta'), styles: const PosStyles(bold: true, height: PosTextSize.size3, width: PosTextSize.size2));
+             bytes += generator.feed(1);
           } else {
             bytes += generator.row([
               PosColumn(text: _normalizeString('  $qty x ${_formatPrice(price)}'), width: 7, styles: const PosStyles(fontType: PosFontType.fontB)),
@@ -184,7 +185,7 @@ class PrinterService {
         bytes += generator.text(_normalizeString('ID: ${order['id']}'), styles: styles);
         bytes += generator.text(_normalizeString(DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())), styles: styles);
         if (order['table'] != null && order['table'] != '-') {
-            bytes += generator.text(_normalizeString('STOL: ${order['table']}'), styles: _getStyles(element, defaultBold: true, defaultSize: PosTextSize.size2));
+            bytes += generator.text(_normalizeString('STOL: ${order['table']}'), styles: _getStyles(element, defaultBold: true, defaultSize: isKitchenOnly ? PosTextSize.size3 : PosTextSize.size2));
         }
         break;
       case 'ITEMS_TABLE':
@@ -196,10 +197,11 @@ class PrinterService {
           double lineTotal = qty * price;
           
           // Name Line (Bold)
-          bytes += generator.text(_normalizeString(item['name']), styles: styles.copyWith(bold: true, height: isKitchenOnly ? PosTextSize.size2 : PosTextSize.size1));
+          bytes += generator.text(_normalizeString(item['name']), styles: styles.copyWith(bold: true, height: isKitchenOnly ? PosTextSize.size3 : PosTextSize.size1));
           
           if (isKitchenOnly) {
-             bytes += generator.text(_normalizeString('SONI: $qty ta'), styles: styles.copyWith(bold: true, height: PosTextSize.size2));
+             bytes += generator.text(_normalizeString('SONI: $qty ta'), styles: styles.copyWith(bold: true, height: PosTextSize.size3, width: PosTextSize.size2));
+             bytes += generator.feed(1);
           } else {
             // Stats Line
             bytes += generator.row([
