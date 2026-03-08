@@ -180,7 +180,7 @@ class FoodDetailScreen extends StatelessWidget {
       children: [
         const Text("Quantity", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         const SizedBox(height: 16),
-        Column( // Changed from Row to Column
+        Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildQuantityButton(icon: Icons.add, onTap: () => quantity.value++, isPrimary: true),
@@ -214,7 +214,7 @@ class FoodDetailScreen extends StatelessWidget {
                 );
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Obx(() => Text(
                   quantity.value.toString().padLeft(2, '0'), 
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)

@@ -879,16 +879,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white, 
-        borderRadius: BorderRadius.circular(30), 
+        borderRadius: BorderRadius.circular(16), 
         border: Border.all(color: const Color(0xFFEDF0F5), width: 1.5)
       ),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           _buildCounterBtn(Icons.add, () => pos.updateQuantity(index, 1)),
           GestureDetector(
             onTap: () => pos.showQuantityDialog(index),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text("$qty", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: isCancelled ? Colors.red : const Color(0xFF1A1A1A))),
             ),
           ),
