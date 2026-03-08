@@ -455,7 +455,7 @@ class OrdersScreen extends StatelessWidget {
     }
   }
 
-  void _confirmUnlock(int orderId, POSController pos) {
+  void _confirmUnlock(dynamic orderId, POSController pos) {
     Get.dialog(
       AlertDialog(
         title: Text("unlock_order".tr),
@@ -475,7 +475,7 @@ class OrdersScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(int orderId, POSController pos) {
+  void _confirmDelete(dynamic orderId, POSController pos) {
     Get.dialog(
       AlertDialog(
         title: Text("delete_confirm_title".tr),
