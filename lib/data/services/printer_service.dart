@@ -70,14 +70,21 @@ class PrinterService {
           final price = (item['price'] as num).toDouble();
           double lineTotal = qty * price;
           
-          bytes += generator.text(_normalizeString(item['name']), styles: const PosStyles(bold: true));
-          bytes += generator.row([
-            PosColumn(text: _normalizeString('  $qty x ${_formatPrice(price)}'), width: 7, styles: const PosStyles(fontType: PosFontType.fontB)),
-            PosColumn(text: _normalizeString(_formatPrice(lineTotal)), width: 5, styles: const PosStyles(align: PosAlign.right)),
-          ]);
+          bytes += generator.text(_normalizeString(item['name']), styles: const PosStyles(bold: true, height: isKitchenOnly ? PosTextSize.size2 : PosTextSize.size1));
+          
+          if (isKitchenOnly) {
+             bytes += generator.text(_normalizeString('SONI: $qty ta'), styles: const PosStyles(bold: true, height: PosTextSize.size2));
+          } else {
+            bytes += generator.row([
+              PosColumn(text: _normalizeString('  $qty x ${_formatPrice(price)}'), width: 7, styles: const PosStyles(fontType: PosFontType.fontB)),
+              PosColumn(text: _normalizeString(_formatPrice(lineTotal)), width: 5, styles: const PosStyles(align: PosAlign.right)),
+            ]);
+          }
         }
         bytes += generator.hr();
-        bytes += _row(generator, 'JAMI:', _formatPrice(order['total']), styles: const PosStyles(bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
+        if (!isKitchenOnly) {
+          bytes += _row(generator, 'JAMI:', _formatPrice(order['total']), styles: const PosStyles(bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
+        }
       } else {
         for (int i = 0; i < layout.length; i++) {
           var element = layout[i];
@@ -95,7 +102,7 @@ class PrinterService {
               continue;
             }
           }
-          bytes += await _printElement(generator, element, order, posController, printer, title);
+          bytes += await _printElement(generator, element, order, posController, printer, title, isKitchenOnly);
         }
       }
 
@@ -140,7 +147,7 @@ class PrinterService {
     );
   }
 
-  Future<List<int>> _printElement(Generator generator, Map<String, dynamic> element, Map<String, dynamic> order, POSController posController, PrinterModel printer, String? title) async {
+  Future<List<int>> _printElement(Generator generator, Map<String, dynamic> element, Map<String, dynamic> order, POSController posController, PrinterModel printer, String? title, bool isKitchenOnly) async {
     List<int> bytes = [];
     final type = element['type'];
     final styles = _getStyles(element);
@@ -189,17 +196,22 @@ class PrinterService {
           double lineTotal = qty * price;
           
           // Name Line (Bold)
-          bytes += generator.text(_normalizeString(item['name']), styles: styles.copyWith(bold: true));
+          bytes += generator.text(_normalizeString(item['name']), styles: styles.copyWith(bold: true, height: isKitchenOnly ? PosTextSize.size2 : PosTextSize.size1));
           
-          // Stats Line
-          bytes += generator.row([
-            PosColumn(text: _normalizeString('  $qty x ${_formatPrice(price)}'), width: 7, styles: styles.copyWith(fontType: PosFontType.fontB)),
-            PosColumn(text: _normalizeString(_formatPrice(lineTotal)), width: 5, styles: styles.copyWith(align: PosAlign.right)),
-          ]);
+          if (isKitchenOnly) {
+             bytes += generator.text(_normalizeString('SONI: $qty ta'), styles: styles.copyWith(bold: true, height: PosTextSize.size2));
+          } else {
+            // Stats Line
+            bytes += generator.row([
+              PosColumn(text: _normalizeString('  $qty x ${_formatPrice(price)}'), width: 7, styles: styles.copyWith(fontType: PosFontType.fontB)),
+              PosColumn(text: _normalizeString(_formatPrice(lineTotal)), width: 5, styles: styles.copyWith(align: PosAlign.right)),
+            ]);
+          }
         }
         bytes += generator.hr(ch: '-');
         break;
       case 'TOTAL_BLOCK':
+        if (isKitchenOnly) break;
         double subtotal = 0;
         final items = (order['details'] as List);
         for (var item in items) {
