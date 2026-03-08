@@ -60,7 +60,7 @@ class PrinterService {
       if (layout.isEmpty) {
         // Fallback for empty layout
         bytes += generator.text(_normalizeString(posController.restaurantName.value), styles: const PosStyles(align: PosAlign.center, bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
-        bytes += generator.hr();
+        bytes += generator.hr(ch: '-');
         bytes += generator.text(_normalizeString('ID: ${order['id']}'), styles: const PosStyles(align: PosAlign.center));
         bytes += generator.text(_normalizeString(DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())), styles: const PosStyles(align: PosAlign.center));
         
@@ -88,7 +88,7 @@ class PrinterService {
             ]);
           }
         }
-        bytes += generator.hr();
+        bytes += generator.hr(ch: '-');
         if (!isKitchenOnly) {
            double subtotal = 0;
            for (var item in items) {
