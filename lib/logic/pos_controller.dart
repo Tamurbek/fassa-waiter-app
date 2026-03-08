@@ -365,8 +365,9 @@ class POSController extends POSControllerState with
         return false;
       }
 
+      final String orderId = uuid.v4();
       final orderData = {
-        "id": uuid.v4(),
+        "id": orderId,
         "table_number": currentMode.value == "Dine-in" ? selectedTable.value : null,
         "type": currentMode.value.toUpperCase().replaceAll("-", "_"),
         "is_paid": isPaid,
@@ -374,7 +375,7 @@ class POSController extends POSControllerState with
         "cafe_id": cafeId,
         "createdAt": DateTime.now().toIso8601String(),
         "total_amount": total,
-        "client_id": orderData['id'],
+        "client_id": orderId,
         "items": () {
           final Map<String, Map<String, dynamic>> grouped = {};
           for (var e in currentOrder) {
