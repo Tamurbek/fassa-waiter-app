@@ -376,7 +376,13 @@ mixin DataSyncMixin on POSControllerState {
         final String? variantId = i['variant_id']?.toString();
         final String? variantName = i['variant_name']?.toString();
         
-        final String name = i['product'] != null ? i['product']['name'] : (i['name'] ?? "Unknown");
+        // Try fallback to local catalog for "Unknown" products
+        String name = i['product'] != null ? i['product']['name'] : (i['name'] ?? "Unknown");
+        if ((name == "Unknown" || name.isEmpty) && id.isNotEmpty) {
+           final catItem = products.firstWhereOrNull((p) => p.id.toString() == id);
+           if (catItem != null) name = catItem.name;
+        }
+
         final int qty = ((i['quantity'] ?? i['qty'] ?? 0) as num).toInt();
         final double price = double.tryParse((i['price'] ?? 0).toString()) ?? 0.0;
         final String? itemTime = i['createdAt'] ?? i['created_at'];
@@ -390,7 +396,9 @@ mixin DataSyncMixin on POSControllerState {
             "id": id,
             "variant_id": variantId,
             "variant_name": variantName,
-            "name": variantName != null ? "$name ($variantName)" : name,
+            "name": (variantName != null && !name.contains("($variantName)")) 
+                ? "$name ($variantName)" 
+                : name,
             "qty": qty,
             "price": price,
             "timestamp": itemTime ?? timestamp,

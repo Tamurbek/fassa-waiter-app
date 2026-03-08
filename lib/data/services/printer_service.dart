@@ -66,10 +66,18 @@ class PrinterService {
         bytes += generator.feed(1);
         final items = order['details'] as List;
         for (var item in items) {
-          bytes += _row(generator, item['name'], '${item['qty']} x ${_formatPrice(item['price'])}');
+          final qty = (item['qty'] as num).toInt();
+          final price = (item['price'] as num).toDouble();
+          double lineTotal = qty * price;
+          
+          bytes += generator.text(_normalizeString(item['name']), styles: const PosStyles(bold: true));
+          bytes += generator.row([
+            PosColumn(text: _normalizeString('  $qty x ${_formatPrice(price)}'), width: 7, styles: const PosStyles(fontType: PosFontType.fontB)),
+            PosColumn(text: _normalizeString(_formatPrice(lineTotal)), width: 5, styles: const PosStyles(align: PosAlign.right)),
+          ]);
         }
         bytes += generator.hr();
-        bytes += _row(generator, 'JAMI:', _formatPrice(order['total']), styles: const PosStyles(bold: true));
+        bytes += _row(generator, 'JAMI:', _formatPrice(order['total']), styles: const PosStyles(bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
       } else {
         for (int i = 0; i < layout.length; i++) {
           var element = layout[i];
@@ -174,22 +182,19 @@ class PrinterService {
         break;
       case 'ITEMS_TABLE':
         bytes += generator.hr(ch: '-');
-        bytes += generator.row([
-          PosColumn(text: _normalizeString('NOMI'), width: 4, styles: styles.copyWith(bold: true)),
-          PosColumn(text: _normalizeString('NARXI'), width: 3, styles: styles.copyWith(bold: true, align: PosAlign.right)),
-          PosColumn(text: _normalizeString('SONI'), width: 2, styles: styles.copyWith(bold: true, align: PosAlign.center)),
-          PosColumn(text: _normalizeString('SUMMA'), width: 3, styles: styles.copyWith(bold: true, align: PosAlign.right)),
-        ]);
-        bytes += generator.hr(ch: '-');
         final items = order['details'] as List;
         for (var item in items) {
           final qty = (item['qty'] as num).toInt();
           final price = (item['price'] as num).toDouble();
+          double lineTotal = qty * price;
+          
+          // Name Line (Bold)
+          bytes += generator.text(_normalizeString(item['name']), styles: styles.copyWith(bold: true));
+          
+          // Stats Line
           bytes += generator.row([
-            PosColumn(text: _normalizeString(item['name']), width: 4, styles: styles),
-            PosColumn(text: _normalizeString(_formatPrice(price)), width: 3, styles: styles.copyWith(align: PosAlign.right)),
-            PosColumn(text: _normalizeString(qty.toString()), width: 2, styles: styles.copyWith(align: PosAlign.center)),
-            PosColumn(text: _normalizeString(_formatPrice(qty * price)), width: 3, styles: styles.copyWith(align: PosAlign.right)),
+            PosColumn(text: _normalizeString('  $qty x ${_formatPrice(price)}'), width: 7, styles: styles.copyWith(fontType: PosFontType.fontB)),
+            PosColumn(text: _normalizeString(_formatPrice(lineTotal)), width: 5, styles: styles.copyWith(align: PosAlign.right)),
           ]);
         }
         bytes += generator.hr(ch: '-');
