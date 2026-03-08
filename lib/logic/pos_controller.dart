@@ -227,7 +227,13 @@ class POSController extends POSControllerState with
     });
 
     socket.onNewOrder((data) {
-      int index = allOrders.indexWhere((o) => o['id'].toString() == data['id'].toString());
+      final String? clientId = data['client_id']?.toString();
+      final String? serverId = data['id']?.toString();
+      
+      int index = allOrders.indexWhere((o) => 
+          (clientId != null && o['id'].toString() == clientId) || 
+          (serverId != null && o['id'].toString() == serverId));
+          
       if (index == -1) {
         final normalized = normalizeOrder(data);
         allOrders.insert(0, normalized);
@@ -235,18 +241,29 @@ class POSController extends POSControllerState with
         saveAllOrders();
 
         if (isAdmin || isCashier) {
-          final orderId = data['id']?.toString();
-          if (orderId != null) {
+            final printKey = "${serverId ?? clientId}_kitchen_auto";
             final now = DateTime.now();
-            final printKey = "${orderId}_kitchen_auto";
             if (_processedPrintIds.containsKey(printKey) && 
-                now.difference(_processedPrintIds[printKey]!).inSeconds < 10) {
+                now.difference(_processedPrintIds[printKey]!).inSeconds < 15) {
               return;
             }
+            // Also check if we just printed the UUID version
+            if (clientId != null && _processedPrintIds.containsKey("${clientId}_null") && 
+                now.difference(_processedPrintIds["${clientId}_null"]!).inSeconds < 15) {
+               return;
+            }
+
             _processedPrintIds[printKey] = now;
-          }
-          printLocally(normalized, isKitchenOnly: true);
+            printLocally(normalized, isKitchenOnly: true);
         }
+      } else {
+         if (clientId != null && serverId != null) {
+            int uuidIdx = allOrders.indexWhere((o) => o['id'].toString() == clientId);
+            if (uuidIdx != -1) {
+               allOrders[uuidIdx]['id'] = serverId;
+               allOrders.refresh();
+            }
+         }
       }
     });
 
@@ -357,6 +374,7 @@ class POSController extends POSControllerState with
         "cafe_id": cafeId,
         "createdAt": DateTime.now().toIso8601String(),
         "total_amount": total,
+        "client_id": orderData['id'],
         "items": () {
           final Map<String, Map<String, dynamic>> grouped = {};
           for (var e in currentOrder) {
@@ -422,8 +440,10 @@ class POSController extends POSControllerState with
           backgroundColor: Colors.blue, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
       }
 
-      await printOrder(normalized, isKitchenOnly: !isPaid, 
-          receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
+      // If NOT paid (just saving), we only want KITCHEN tickets.
+      await printOrder(normalized, 
+          isKitchenOnly: !isPaid, 
+          receiptTitle: isPaid ? "TO'LOV CHEKI" : null);
 
       clearCurrentOrder();
       return true;
@@ -537,8 +557,11 @@ class POSController extends POSControllerState with
           _processedPrintIds[orderId] = DateTime.now();
         }
 
-        await printOrder(orderToPrint, isKitchenOnly: !isPaid, 
-            receiptTitle: isPaid ? "TO'LOV CHEKI" : "HISOB CHEKI");
+        // If NOT paid (just saving), we only want KITCHEN tickets.
+        await printOrder(orderToPrint, 
+            isKitchenOnly: !isPaid, 
+            skipCancellation: wasBillPrinted && !isPaid,
+            receiptTitle: isPaid ? "TO'LOV CHEKI" : null);
 
         allOrders.refresh();
         clearCurrentOrder();
