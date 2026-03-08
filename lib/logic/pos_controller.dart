@@ -387,6 +387,11 @@ class POSController extends POSControllerState with
             final int qty = e['quantity'] as int;
             if (qty <= 0) continue;
 
+            // Skip parent items if they have variants but no variant is specified
+            if ((item.hasVariants || item.variants.isNotEmpty) && variantId == null) {
+              continue;
+            }
+
             if (grouped.containsKey(groupKey)) {
               grouped[groupKey]!['quantity'] += qty;
             } else {

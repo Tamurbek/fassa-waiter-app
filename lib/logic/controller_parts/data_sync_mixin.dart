@@ -387,6 +387,12 @@ mixin DataSyncMixin on POSControllerState {
         final double price = double.tryParse((i['price'] ?? 0).toString()) ?? 0.0;
         final String? itemTime = i['createdAt'] ?? i['created_at'];
 
+        // Filter out parent items that should have variants
+        final catalogItem = products.firstWhereOrNull((p) => p.id.toString() == id);
+        if (catalogItem != null && (catalogItem.hasVariants || catalogItem.variants.isNotEmpty) && variantId == null) {
+          continue;
+        }
+
         final String groupKey = variantId != null ? "${id}_$variantId" : id;
 
         if (groupedDetails.containsKey(groupKey)) {

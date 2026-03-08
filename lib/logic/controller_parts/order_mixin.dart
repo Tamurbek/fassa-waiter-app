@@ -47,6 +47,12 @@ mixin OrderMixin on POSControllerState {
 
   void addToCart(FoodItem item, {FoodVariant? variant}) {
     if (!_checkGeofence()) return;
+
+    // Prevent adding parent items if they have variants
+    if ((item.hasVariants || item.variants.isNotEmpty) && variant == null) {
+      return;
+    }
+
     Vibration.vibrate(duration: 50, amplitude: 128);
     int index = currentOrder.indexWhere((e) => 
       e['item'].id == item.id && 
@@ -279,6 +285,11 @@ mixin OrderMixin on POSControllerState {
           variant = item.variants.firstWhereOrNull((v) => v.id == d['variant_id']);
         }
         
+        // Skip parent items if they have variants but no variant was found/specified
+        if ((item.hasVariants || item.variants.isNotEmpty) && variant == null) {
+          continue;
+        }
+
         currentOrder.add({
           'item': item, 
           'variant': variant,
