@@ -65,14 +65,18 @@ mixin PrinterMixin on POSControllerState {
 
         if (shouldPrintCurrentReceipt && printer.tableAreaNames.isNotEmpty) {
           final String orderTableId = (order['table'] ?? "").toString();
-          final String orderAreaName = orderTableId.contains("-") ? orderTableId.split("-")[0] : "";
-          if (!printer.tableAreaNames.contains(orderAreaName)) shouldPrintCurrentReceipt = false;
+          final String? orderAreaName = order['table_area']?.toString() ?? 
+                                       (orderTableId.contains("-") ? orderTableId.split("-")[0] : null);
+          
+          if (orderAreaName != null && orderAreaName.isNotEmpty) {
+            if (!printer.tableAreaNames.contains(orderAreaName)) shouldPrintCurrentReceipt = false;
+          }
         }
 
-        if (shouldPrintCurrentReceipt && !isKitchenOnly) {
+        if (shouldPrintCurrentReceipt && (!isKitchenOnly || receiptTitle != null)) {
           if ((receiptTitle == "HISOB CHEKI" && !enableBillPrint.value) || 
-              (receiptTitle != "HISOB CHEKI" && !enablePaymentPrint.value)) {
-            // Disabled
+              (receiptTitle != "HISOB CHEKI" && receiptTitle != null && !enablePaymentPrint.value)) {
+            // Disabled in settings
           } else {
             final orderForPrinting = Map<String, dynamic>.from(order);
             orderForPrinting['service_fee_dine_in'] = serviceFeeDineIn.value;

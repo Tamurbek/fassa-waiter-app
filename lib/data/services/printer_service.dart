@@ -11,6 +11,12 @@ class PrinterService {
   static final PrinterService _instance = PrinterService._internal();
   factory PrinterService() => _instance;
   PrinterService._internal();
+  
+  CapabilityProfile? _cachedProfile;
+  Future<CapabilityProfile> _getProfile() async {
+    _cachedProfile ??= await CapabilityProfile.load();
+    return _cachedProfile!;
+  }
 
   String _formatPrice(dynamic amount) {
     double value = double.tryParse(amount.toString()) ?? 0.0;
@@ -20,10 +26,17 @@ class PrinterService {
 
   String _normalizeString(String? text) {
     if (text == null) return "";
+    // Comprehensive Cyrillic to Latin transliteration for printers without Cyrillic support
     Map<String, String> replacements = {
-      'Е': 'E', 'е': 'e', 'А': 'A', 'а': 'a', 'В': 'B', 'С': 'C', 'с': 'c',
-      'Н': 'H', 'К': 'K', 'к': 'k', 'М': 'M', 'м': 'm', 'О': 'O', 'о': 'o',
-      'Р': 'P', 'р': 'p', 'Т': 'T', 'Х': 'X', 'х': 'x', 'У': 'Y', 'у': 'y',
+      'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo', 'Ж': 'Zh', 
+      'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O', 
+      'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 
+      'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch', 'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh', 
+      'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 
+      'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts', 
+      'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+      'Ў': 'O\'', 'ў': 'o\'', 'Қ': 'Q', 'қ': 'q', 'Ғ': 'G\'', 'ғ': 'g\'', 'Ҳ': 'H', 'ҳ': 'h',
     };
     String result = text;
     replacements.forEach((key, value) => result = result.replaceAll(key, value));
@@ -34,7 +47,7 @@ class PrinterService {
     if (printer.ipAddress == null || printer.ipAddress!.isEmpty) return false;
 
     try {
-      final profile = await CapabilityProfile.load();
+      final profile = await _getProfile();
       final generator = Generator(
           printer.paperSize == '58mm' ? PaperSize.mm58 : PaperSize.mm80, profile);
       
@@ -182,7 +195,49 @@ class PrinterService {
         bytes += generator.hr(ch: '-');
         break;
       case 'TOTAL_BLOCK':
-        bytes += _row(generator, 'JAMI:', _formatPrice(order['total']), styles: styles.copyWith(bold: true));
+        double subtotal = 0;
+        final items = (order['details'] as List);
+        for (var item in items) {
+          subtotal += (double.tryParse(item['price'].toString()) ?? 0.0) * (int.tryParse(item['qty'].toString()) ?? 0);
+        }
+        
+        bytes += _row(generator, 'SUMMA:', _formatPrice(subtotal), styles: styles);
+        
+        // Calculate Service Fee
+        double feePercent = 0.0;
+        double feeFixed = 0.0;
+        final String mode = (order['mode'] ?? "Dine-in").toString().toLowerCase();
+        
+        if (mode.contains("dine")) {
+          feePercent = (order['service_fee_dine_in'] as num?)?.toDouble() ?? 10.0;
+        } else if (mode.contains("takeaway")) {
+          feeFixed = (order['service_fee_takeaway'] as num?)?.toDouble() ?? 0.0;
+        } else if (mode.contains("delivery")) {
+          feeFixed = (order['service_fee_delivery'] as num?)?.toDouble() ?? 0.0;
+        }
+
+        double feeAmt = feeFixed;
+        if (feePercent > 0) {
+          feeAmt = subtotal * (feePercent / 100);
+          bytes += _row(generator, 'XIZMAT (${feePercent.toInt()}%):', _formatPrice(feeAmt), styles: styles);
+        } else if (feeFixed > 0) {
+          bytes += _row(generator, 'XIZMAT:', _formatPrice(feeAmt), styles: styles);
+        }
+
+        final double discountAmt = (order['discount_amount'] as num?)?.toDouble() ?? 0.0;
+        if (discountAmt > 0) {
+          bytes += _row(generator, 'CHEGIRMA:', '-${_formatPrice(discountAmt)}', styles: styles.copyWith(bold: true));
+        }
+        
+        double finalTotal = subtotal + feeAmt - discountAmt;
+        if (finalTotal < 0) finalTotal = 0;
+
+        bytes += generator.hr(ch: '=');
+        bytes += generator.row([
+          PosColumn(text: _normalizeString('JAMI:'), width: 5, styles: styles.copyWith(bold: true, height: PosTextSize.size2, width: PosTextSize.size2)),
+          PosColumn(text: _normalizeString('${_formatPrice(finalTotal)}'), width: 7, styles: styles.copyWith(bold: true, align: PosAlign.right, height: PosTextSize.size2, width: PosTextSize.size2)),
+        ]);
+        bytes += generator.hr(ch: '=');
         break;
       case 'DIVIDER':
         bytes += generator.hr(ch: '-');
@@ -263,7 +318,7 @@ class PrinterService {
     if (printer.ipAddress == null || printer.ipAddress!.isEmpty || items.isEmpty) return false;
 
     try {
-      final profile = await CapabilityProfile.load();
+      final profile = await _getProfile();
       final generator = Generator(
           printer.paperSize == '58mm' ? PaperSize.mm58 : PaperSize.mm80, profile);
       
@@ -322,7 +377,7 @@ class PrinterService {
     if (printer.ipAddress == null || printer.ipAddress!.isEmpty) return false;
 
     try {
-      final profile = await CapabilityProfile.load();
+      final profile = await _getProfile();
       final generator = Generator(
           printer.paperSize == '58mm' ? PaperSize.mm58 : PaperSize.mm80, profile);
       List<int> bytes = [];

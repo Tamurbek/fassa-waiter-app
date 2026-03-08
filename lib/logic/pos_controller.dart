@@ -154,13 +154,16 @@ class POSController extends POSControllerState with
     isStockTrackingEnabled.value = storage.read('is_stock_tracking_enabled') ?? true;
 
     // Load Cafe Settings (Offline/First-load)
-    restaurantName.value = storage.read('restaurant_name') ?? "";
-    restaurantAddress.value = storage.read('restaurant_address') ?? "";
-    restaurantPhone.value = storage.read('restaurant_phone') ?? "";
-    currency.value = storage.read('currency') ?? "UZS";
-    serviceFeeDineIn.value = (storage.read('service_fee_dine_in') as num?)?.toDouble() ?? 10.0;
-    serviceFeeTakeaway.value = (storage.read('service_fee_takeaway') as num?)?.toDouble() ?? 0.0;
-    serviceFeeDelivery.value = (storage.read('service_fee_delivery') as num?)?.toDouble() ?? 3000.0;
+    restaurantName.value = (storage.read('restaurant_name') ?? "").toString();
+    restaurantAddress.value = (storage.read('restaurant_address') ?? "").toString();
+    restaurantPhone.value = (storage.read('restaurant_phone') ?? "").toString();
+    currency.value = (storage.read('currency') ?? "UZS").toString();
+    
+    try {
+      serviceFeeDineIn.value = double.tryParse(storage.read('service_fee_dine_in')?.toString() ?? "") ?? 10.0;
+      serviceFeeTakeaway.value = double.tryParse(storage.read('service_fee_takeaway')?.toString() ?? "") ?? 0.0;
+      serviceFeeDelivery.value = double.tryParse(storage.read('service_fee_delivery')?.toString() ?? "") ?? 3000.0;
+    } catch (e) { print("Error parsing service fees: $e"); }
     receiptHeader.value = storage.read('receipt_header') ?? "";
     receiptFooter.value = storage.read('receipt_footer') ?? "Xaridingiz uchun rahmat!";
     showLogo.value = storage.read('show_logo') ?? true;
@@ -185,7 +188,11 @@ class POSController extends POSControllerState with
       if (index != -1) {
         final order = allOrders[index];
         final String oldStatus = order['status']?.toString() ?? "";
-        final String newStatusFormatted = status!.replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" ");
+        final String rawStatus = status ?? "PENDING";
+        final String newStatusFormatted = rawStatus.replaceAll("_", " ")
+            .split(" ")
+            .map((s) => s.isNotEmpty ? s.toLowerCase().capitalizeFirst : "")
+            .join(" ");
         
         allOrders[index]['status'] = newStatusFormatted;
         allOrders.refresh();

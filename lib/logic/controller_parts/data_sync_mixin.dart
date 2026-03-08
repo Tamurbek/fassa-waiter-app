@@ -357,54 +357,78 @@ mixin DataSyncMixin on POSControllerState {
   }
 
   Map<String, dynamic> normalizeOrder(Map<String, dynamic> o) {
-    final tableNum = o['tableNumber'] ?? o['table_number'];
-    final totalAmt = o['totalAmount'] ?? o['total_amount'];
-    final typeStr = o['type'] ?? 'DINE_IN';
-    final statusStr = o['status'] ?? 'PENDING';
-    final timestamp = o['createdAt'] ?? o['created_at'];
+    try {
+      final tableNum = o['tableNumber'] ?? o['table_number'];
+      final tableArea = o['table_area'] ?? o['tableArea'];
+      final totalAmt = o['totalAmount'] ?? o['total_amount'];
+      final typeStr = o['type'] ?? 'DINE_IN';
+      final statusStr = o['status'] ?? 'PENDING';
+      final timestamp = o['createdAt'] ?? o['created_at'];
 
-    final List itemsList = o['items'] as List? ?? [];
-    final Map<String, Map<String, dynamic>> groupedDetails = {};
+      final List itemsList = o['items'] is List ? o['items'] : (o['details'] is List ? o['details'] : []);
+      final Map<String, Map<String, dynamic>> groupedDetails = {};
 
-    for (var i in itemsList) {
-      final String id = (i['productId'] ?? i['product_id']).toString();
-      final String? variantId = i['variant_id']?.toString();
-      final String? variantName = i['variant_name']?.toString();
-      final String name = i['product'] != null ? i['product']['name'] : (i['name'] ?? "Unknown");
-      final int qty = (i['quantity'] ?? i['qty'] ?? 0) as int;
-      final double price = double.tryParse((i['price'] ?? 0).toString()) ?? 0.0;
-      final String? itemTime = i['createdAt'] ?? i['created_at'];
+      for (var i in itemsList) {
+        if (i is! Map) continue;
+        final String id = (i['productId'] ?? i['product_id'] ?? i['id'] ?? "").toString();
+        if (id.isEmpty) continue;
+        
+        final String? variantId = i['variant_id']?.toString();
+        final String? variantName = i['variant_name']?.toString();
+        
+        final String name = i['product'] != null ? i['product']['name'] : (i['name'] ?? "Unknown");
+        final int qty = ((i['quantity'] ?? i['qty'] ?? 0) as num).toInt();
+        final double price = double.tryParse((i['price'] ?? 0).toString()) ?? 0.0;
+        final String? itemTime = i['createdAt'] ?? i['created_at'];
 
-      final String groupKey = variantId != null ? "${id}_$variantId" : id;
+        final String groupKey = variantId != null ? "${id}_$variantId" : id;
 
-      if (groupedDetails.containsKey(groupKey)) {
-        groupedDetails[groupKey]!['qty'] += qty;
-      } else {
-        groupedDetails[groupKey] = {
-          "id": id,
-          "variant_id": variantId,
-          "variant_name": variantName,
-          "name": variantName != null ? "$name ($variantName)" : name,
-          "qty": qty,
-          "price": price,
-          "timestamp": itemTime ?? timestamp,
-        };
+        if (groupedDetails.containsKey(groupKey)) {
+          groupedDetails[groupKey]!['qty'] += qty;
+        } else {
+          groupedDetails[groupKey] = {
+            "id": id,
+            "variant_id": variantId,
+            "variant_name": variantName,
+            "name": variantName != null ? "$name ($variantName)" : name,
+            "qty": qty,
+            "price": price,
+            "timestamp": itemTime ?? timestamp,
+          };
+        }
       }
+
+      final details = groupedDetails.values.toList();
+
+      return {
+        "id": o['id']?.toString(),
+        "table": tableNum != null ? tableNum.toString() : "-",
+        "table_area": tableArea,
+        "mode": typeStr.toString().toLowerCase().replaceAll("_", "-").capitalizeFirst,
+        "items": details.fold(0, (sum, item) => sum + (item['qty'] as int)),
+        "total": double.tryParse(totalAmt.toString()) ?? 0.0,
+        "status": statusStr.toString().replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" "),
+        "waiter_name": o['waiter_name'],
+        "timestamp": timestamp,
+        "details": details,
+        "discount_type": o['discount_type'],
+        "discount_value": o['discount_value'],
+        "discount_amount": o['discount_amount'],
+        "service_fee_dine_in": o['service_fee_dine_in'],
+        "service_fee_takeaway": o['service_fee_takeaway'],
+        "service_fee_delivery": o['service_fee_delivery'],
+      };
+    } catch (e) {
+      print("Error normalizing order: $e");
+      return {
+        "id": o['id']?.toString() ?? "0",
+        "table": "-",
+        "status": "Error",
+        "items": 0,
+        "total": 0.0,
+        "details": [],
+      };
     }
-
-    final details = groupedDetails.values.toList();
-
-    return {
-      "id": o['id']?.toString(),
-      "table": tableNum != null ? tableNum.toString() : "-",
-      "mode": typeStr.toString().toLowerCase().replaceAll("_", "-").capitalizeFirst,
-      "items": details.fold(0, (sum, item) => sum + (item['qty'] as int)),
-      "total": double.tryParse(totalAmt.toString()) ?? 0.0,
-      "status": statusStr.toString().replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" "),
-      "waiter_name": o['waiter_name'],
-      "timestamp": timestamp,
-      "details": details,
-    };
   }
 
   void saveAllOrders() => storage.write('all_orders', allOrders.toList());

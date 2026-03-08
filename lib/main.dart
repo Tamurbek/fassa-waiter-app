@@ -54,9 +54,19 @@ class FassaApp extends StatelessWidget {
     final storage = GetStorage();
     pos.restaurantName.value = storage.read('restaurant_name') ?? "Fassa";
     String? storedLang = storage.read('lang');
-    Locale initialLocale = storedLang != null 
-        ? Locale(storedLang.split('_')[0], storedLang.split('_')[1])
-        : const Locale('uz', 'UZ');
+    Locale initialLocale = const Locale('uz', 'UZ');
+    if (storedLang != null) {
+      try {
+        final parts = storedLang.split('_');
+        if (parts.length >= 2) {
+          initialLocale = Locale(parts[0], parts[1]);
+        } else if (parts.length == 1) {
+          initialLocale = Locale(parts[0]);
+        }
+      } catch (e) {
+        print("Locale parse error: $e");
+      }
+    }
 
     // Remove splash screen after first frame
     FlutterNativeSplash.remove();
