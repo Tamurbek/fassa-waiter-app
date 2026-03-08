@@ -62,6 +62,12 @@ class PrinterService {
         bytes += generator.text(_normalizeString(posController.restaurantName.value), styles: const PosStyles(align: PosAlign.center, bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
         bytes += generator.hr();
         bytes += generator.text(_normalizeString('ID: ${order['id']}'), styles: const PosStyles(align: PosAlign.center));
+        bytes += generator.text(_normalizeString(DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())), styles: const PosStyles(align: PosAlign.center));
+        
+        final String waiterName = order['waiter_name'] ?? posController.currentUser.value?['name'] ?? "";
+        if (waiterName.isNotEmpty) {
+           bytes += generator.text(_normalizeString('AFITSANT: $waiterName'), styles: const PosStyles(align: PosAlign.left));
+        }
         bytes += generator.feed(1);
         final items = order['details'] as List;
         for (var item in items) {
@@ -188,6 +194,12 @@ class PrinterService {
         if (title != null) bytes += generator.text(_normalizeString(title.toUpperCase()), styles: _getStyles(element, defaultBold: true));
         bytes += generator.text(_normalizeString('ID: ${order['id']}'), styles: styles);
         bytes += generator.text(_normalizeString(DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())), styles: styles);
+        
+        final String waiterName = order['waiter_name'] ?? posController.currentUser.value?['name'] ?? "";
+        if (waiterName.isNotEmpty) {
+           bytes += generator.text(_normalizeString('AFITSANT: $waiterName'), styles: styles);
+        }
+
         if (order['table'] != null && order['table'] != '-') {
             bytes += generator.text(_normalizeString('STOL: ${order['table']}'), styles: _getStyles(element, defaultBold: true, defaultSize: isKitchenOnly ? PosTextSize.size3 : PosTextSize.size2));
         }
