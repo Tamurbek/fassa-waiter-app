@@ -54,9 +54,8 @@ class PrinterService {
       List<int> bytes = [];
       final posController = Get.find<POSController>();
 
-      final layout = isKitchenOnly 
-          ? posController.kitchenReceiptLayout.toList() 
-          : posController.receiptLayout.toList();
+      // Using hardcoded professional layout for now
+      final layout = []; 
 
       if (layout.isEmpty) {
         // Fallback for empty layout
@@ -84,7 +83,12 @@ class PrinterService {
         }
         bytes += generator.hr();
         if (!isKitchenOnly) {
-          bytes += _row(generator, 'JAMI:', _formatPrice(order['total']), styles: const PosStyles(bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
+           final String payMethod = (order['payment_method'] ?? "").toString().toUpperCase();
+           if (payMethod.isNotEmpty) {
+              bytes += generator.text(_normalizeString('TO\'LOV TURI: $payMethod'), styles: const PosStyles(align: PosAlign.center, bold: true));
+           }
+           bytes += generator.hr();
+           bytes += _row(generator, 'JAMI:', _formatPrice(order['total']), styles: const PosStyles(bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
         }
       } else {
         for (int i = 0; i < layout.length; i++) {
