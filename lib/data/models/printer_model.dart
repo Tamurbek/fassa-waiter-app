@@ -10,6 +10,7 @@ class PrinterModel {
   final List<String> tableAreaNames;
   final bool printReceipts;
   final bool printPayments;
+  final bool printBill;
   final String paperSize;
 
   PrinterModel({
@@ -24,6 +25,7 @@ class PrinterModel {
     this.tableAreaNames = const [],
     this.printReceipts = false,
     this.printPayments = false,
+    this.printBill = false,
     this.paperSize = '80mm',
   });
 
@@ -39,6 +41,7 @@ class PrinterModel {
     'table_area_names': tableAreaNames,
     'print_receipts': printReceipts,
     'print_payments': printPayments,
+    'print_bill': printBill,
     'paper_size': paperSize,
   };
 
@@ -62,6 +65,7 @@ class PrinterModel {
       tableAreaNames: List<String>.from(json['table_area_names'] ?? []),
       printReceipts: json['print_receipts'] ?? false,
       printPayments: json['print_payments'] ?? false,
+      printBill: json['print_bill'] ?? false,
       paperSize: json['paper_size'] ?? '80mm',
     );
   }
