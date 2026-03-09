@@ -566,7 +566,6 @@ class POSController extends POSControllerState with
         // If NOT paid (just saving), we only want KITCHEN tickets.
         await printOrder(orderToPrint, 
             isKitchenOnly: !isPaid, 
-            skipCancellation: wasBillPrinted && !isPaid,
             receiptTitle: isPaid ? "TO'LOV CHEKI" : null);
 
         allOrders.refresh();
