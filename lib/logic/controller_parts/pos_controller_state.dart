@@ -35,6 +35,7 @@ abstract class POSControllerState extends GetxController {
   var deviceRole = RxnString(); // "ADMIN", "CASHIER", "WAITER"
   var waiterCafeId = RxnString(); // Used only for WAITER role
   var printedKitchenQuantities = <String, Map<String, int>>{}.obs; // "orderId": {"productId": qty}
+  final Map<String, DateTime> processedPrintIds = {};
   
   // Order modes, current selection, table, and editing state
   final List<String> orderModes = ["Dine-in", "Takeaway", "Delivery"];

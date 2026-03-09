@@ -122,7 +122,7 @@ mixin PrinterMixin on POSControllerState {
           bool success = await printerService.printReceipt(printer, orderForPrinting, title: receiptTitle);
           if (success) successPrinters.add(printer.name);
           else failedPrinters.add(printer.name);
-        }());
+        }));
       }
     }
 
@@ -130,7 +130,7 @@ mixin PrinterMixin on POSControllerState {
     for (var printer in activePrinters) {
       if (printer.preparationAreaIds.isEmpty) continue;
       
-      tasks.add(() async {
+      tasks.add(Future(() async {
         try {
           if (enableKitchenPrint.value) {
             final orderIdStr = order['id']?.toString() ?? "0";
@@ -230,7 +230,7 @@ mixin PrinterMixin on POSControllerState {
         } catch (e) {
           failedPrinters.add(printer.name);
         }
-      }());
+      }));
     }
 
     await Future.wait(tasks);
