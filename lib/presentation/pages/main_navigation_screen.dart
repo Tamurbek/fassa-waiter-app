@@ -15,7 +15,7 @@ class MainNavigationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final POSController pos = Get.find<POSController>();
-    var currentIndex = 0.obs;
+
 
     final List<Map<String, dynamic>> menuItems = [
       {"icon": Icons.table_restaurant_rounded, "label": "tables".tr, "page": const TableSelectionScreen(isRoot: true)},
@@ -26,7 +26,8 @@ class MainNavigationScreen extends StatelessWidget {
 
     return Obx(() => Scaffold(
       body: IndexedStack(
-        index: currentIndex.value,
+        index: pos.navIndex.value,
+
         children: menuItems.map<Widget>((e) => e['page'] as Widget).toList(),
       ),
       bottomNavigationBar: Container(
@@ -39,7 +40,8 @@ class MainNavigationScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(menuItems.length, (index) {
-              return _buildMobileNavItem(index, currentIndex, menuItems[index]['icon'] as IconData);
+              return _buildMobileNavItem(index, pos.navIndex, menuItems[index]['icon'] as IconData);
+
             }),
           ),
         ),

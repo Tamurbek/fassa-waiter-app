@@ -669,11 +669,11 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () => pos.addToCart(item, variant: variant),
+            onTap: () => pos.decrementFromCart(item, variant: variant),
             child: Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.add, size: 22, color: Colors.white),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.remove, size: 22, color: Color(0xFF1A1A1A)),
             ),
           ),
           Container(
@@ -682,15 +682,16 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text("$qty", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
           ),
           GestureDetector(
-            onTap: () => pos.decrementFromCart(item, variant: variant),
+            onTap: () => pos.addToCart(item, variant: variant),
             child: Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.remove, size: 22, color: Color(0xFF1A1A1A)),
+              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.add, size: 22, color: Colors.white),
             ),
           ),
         ],
       ),
+
     );
   }
 
@@ -705,11 +706,11 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () => pos.addToCart(item),
+            onTap: () => pos.decrementFromCart(item),
             child: Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.add, size: 22, color: Colors.white),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.remove, size: 22, color: Color(0xFF1A1A1A)),
             ),
           ),
           Container(
@@ -718,15 +719,16 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text("$qty", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
           ),
           GestureDetector(
-            onTap: () => pos.decrementFromCart(item),
+            onTap: () => pos.addToCart(item),
             child: Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.remove, size: 22, color: Color(0xFF1A1A1A)),
+              decoration: BoxDecoration(color: const Color(0xFFFF9500), borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.add, size: 22, color: Colors.white),
             ),
           ),
         ],
       ),
+
     );
   }
 
