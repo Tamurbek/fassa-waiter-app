@@ -349,6 +349,23 @@ class POSController extends POSControllerState with
         logout(forced: true);
       }
     });
+
+    socket.onForceLogout((data) {
+      if (currentUser.value != null) {
+        final List<dynamic> userIds = data['user_ids'] ?? [];
+        if (userIds.contains(currentUser.value!['id'].toString())) {
+          logout(forced: true);
+          Get.snackbar(
+            "Tizimdan chiqarildingiz", 
+            "Administrator sizni barcha qurilmalardan chiqardi.", 
+            backgroundColor: Colors.red, 
+            colorText: Colors.white,
+            duration: const Duration(seconds: 5),
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
+      }
+    });
   }
 
   Future<void> _playReadySound() async {
