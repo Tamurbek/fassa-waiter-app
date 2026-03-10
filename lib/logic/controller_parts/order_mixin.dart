@@ -206,20 +206,51 @@ mixin OrderMixin on POSControllerState {
     saveAllOrders();
   }
 
-  Future<void> changeOrderTable(dynamic orderId, String newTableId) async {
+  Future<void> changeOrderTable(dynamic orderId, String tableKey) async {
     try {
-      await api.updateOrder(orderId, {"table_number": newTableId});
+      final String? tableUuid = tableBackendIds[tableKey];
+      // Extract the clean number from "Area-Number" format
+      final parts = tableKey.split("-");
+      final String tableNum = parts.length >= 2 ? parts.sublist(1).join("-") : tableKey;
+
+      await api.updateOrder(orderId, {
+        "table_id": tableUuid,
+        "table_number": tableNum,
+      });
       int index = allOrders.indexWhere((o) => o['id'] == orderId);
       if (index != -1) {
-        allOrders[index]['table'] = newTableId;
+        allOrders[index]['table'] = tableKey;
+        allOrders[index]['table_id'] = tableUuid;
         allOrders.refresh();
         saveAllOrders();
       }
-      Get.snackbar("Stol o'zgartirildi", "Buyurtma $newTableId-stolga o'tkazildi", 
+      Get.snackbar("Stol o'zgartirildi", "Buyurtma $tableKey-stolga o'tkazildi", 
         backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
       print("Error updating table: $e");
       Get.snackbar("Xato", "Stolni o'zgartirishda xatolik yuz berdi", 
+        backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  Future<void> changeOrderWaiter(dynamic orderId, String newWaiterId, String newWaiterName) async {
+    try {
+      await api.updateOrder(orderId, {
+        "waiter_id": newWaiterId,
+        "waiter_name": newWaiterName,
+      });
+      int index = allOrders.indexWhere((o) => o['id'] == orderId);
+      if (index != -1) {
+        allOrders[index]['waiter_id'] = newWaiterId;
+        allOrders[index]['waiter_name'] = newWaiterName;
+        allOrders.refresh();
+        saveAllOrders();
+      }
+      Get.snackbar("Afitsant o'zgartirildi", "Buyurtma $newWaiterName-ga o'tkazildi", 
+        backgroundColor: Colors.blue, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      print("Error updating waiter: $e");
+      Get.snackbar("Xato", "Afitsantni o'zgartirishda xatolik yuz berdi", 
         backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
     }
   }

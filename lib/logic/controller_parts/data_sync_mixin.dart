@@ -347,7 +347,7 @@ mixin DataSyncMixin on POSControllerState {
 
       // 8. Fetch Users
       () async {
-        if (isAdmin || isCashier) {
+        if (isAdmin || isCashier || isWaiter) {
           try {
             final backendUsers = await api.getUsers();
             users.assignAll(List<Map<String, dynamic>>.from(backendUsers));
@@ -448,6 +448,7 @@ mixin DataSyncMixin on POSControllerState {
       return {
         "id": o['id']?.toString(),
         "table": tableKey,
+        "table_id": tableUuid,
         "table_area": tableArea,
         "mode": typeStr.toString().toLowerCase().replaceAll("_", "-").capitalizeFirst,
         "items": details.fold(0, (sum, item) => sum + (item['qty'] as int)),
