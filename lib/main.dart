@@ -27,6 +27,7 @@ void main() async {
     // 1. Storage with timeout to prevent hanging
     await GetStorage.init().timeout(const Duration(seconds: 3), onTimeout: () {
       print("Storage initialization timed out, continuing anyway...");
+      return false;
     });
     
     // 2. Localization
