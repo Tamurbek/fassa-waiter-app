@@ -186,6 +186,8 @@ mixin DataSyncMixin on POSControllerState {
           telegram.value = cafe['telegram'] ?? "";
           instagramLink.value = cafe['instagram_link'] ?? "";
           telegramLink.value = cafe['telegram_link'] ?? "";
+          showInstagramQr.value = cafe['show_instagram_qr'] ?? false;
+          showPhoneOnReceipt.value = cafe['show_phone_on_receipt'] ?? true;
           allowWaiterMobileOrders.value = cafe['allow_waiter_mobile_orders'] ?? true;
           workStartTime.value = cafe['work_start_time'] ?? "00:00";
           workEndTime.value = cafe['work_end_time'] ?? "23:59";

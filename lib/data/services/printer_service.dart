@@ -74,6 +74,10 @@ class PrinterService {
           } else {
             // Fallback for empty layout
             bytes += generator.text(_normalizeString(posController.restaurantName.value), styles: const PosStyles(align: PosAlign.center, bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
+            if (posController.restaurantAddress.value.isNotEmpty) bytes += generator.text(_normalizeString(posController.restaurantAddress.value), styles: const PosStyles(align: PosAlign.center, fontType: PosFontType.fontB));
+            if (posController.showPhoneOnReceipt.value && posController.restaurantPhone.value.isNotEmpty) {
+               bytes += generator.text(_normalizeString('TEL: ${posController.restaurantPhone.value}'), styles: const PosStyles(align: PosAlign.center, bold: true));
+            }
             bytes += _hr(generator, ch: '-', is80mm: is80mm);
             final String displayId = order['id'].toString().substring(0, order['id'].toString().length > 8 ? 8 : order['id'].toString().length);
             bytes += generator.text(_normalizeString('ID: #$displayId'), styles: const PosStyles(align: PosAlign.center, bold: true));
@@ -162,6 +166,17 @@ align: PosAlign.left));
              bytes += _hr(generator, ch: '=', is80mm: is80mm);
              bytes += _row(generator, 'JAMI:', _formatPrice(finalTotal), styles: const PosStyles(bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
              bytes += _hr(generator, ch: '=', is80mm: is80mm);
+             
+             // Footer with Instagram QR
+             if (posController.showInstagramQr.value && posController.instagramLink.value.isNotEmpty) {
+                bytes += generator.text(_normalizeString('INSTAGRAM QR'), styles: const PosStyles(align: PosAlign.center, bold: true));
+                bytes += generator.qrcode(posController.instagramLink.value, size: QRSize.size4);
+                bytes += generator.feed(1);
+             }
+             
+             if (posController.receiptFooter.value.isNotEmpty) {
+                bytes += generator.text(_normalizeString(posController.receiptFooter.value), styles: const PosStyles(align: PosAlign.center));
+             }
           }
       } else {
         for (int i = 0; i < layout.length; i++) {
@@ -235,7 +250,10 @@ align: PosAlign.left));
       case 'STORE_NAME':
         bytes += generator.text(_normalizeString(posController.restaurantName.value), styles: _getStyles(element, defaultBold: true, defaultSize: PosTextSize.size2));
         if (posController.restaurantAddress.value.isNotEmpty) bytes += generator.text(_normalizeString(posController.restaurantAddress.value), styles: _getStyles(element));
-        if (posController.restaurantPhone.value.isNotEmpty) bytes += generator.text(_normalizeString(posController.restaurantPhone.value), styles: _getStyles(element));
+        if (posController.showPhoneOnReceipt.value && posController.restaurantPhone.value.isNotEmpty) {
+           bytes += generator.text(_normalizeString('TEL: ${posController.restaurantPhone.value}'), styles: const PosStyles(align: PosAlign.center, bold: true));
+        }
+        bytes += generator.hr(ch: '-');
         break;
       case 'LOGO':
       case 'CAFE_LOGO':
