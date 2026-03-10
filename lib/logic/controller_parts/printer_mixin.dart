@@ -109,7 +109,7 @@ mixin PrinterMixin on POSControllerState {
 
       // Execute receipt printing tasks
       for (var printer in targetPrinters) {
-        tasks.add(() async {
+        tasks.add((() async {
           if ((receiptTitle == "HISOB CHEKI" && !enableBillPrint.value) || 
               ((receiptTitle == "TO'LOV CHEKI" || receiptTitle == null) && !enablePaymentPrint.value)) {
             return;
@@ -122,7 +122,7 @@ mixin PrinterMixin on POSControllerState {
           bool success = await printerService.printReceipt(printer, orderForPrinting, title: receiptTitle);
           if (success) successPrinters.add(printer.name);
           else failedPrinters.add(printer.name);
-        }));
+        })());
       }
     }
 

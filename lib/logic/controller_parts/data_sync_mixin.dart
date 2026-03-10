@@ -453,12 +453,22 @@ mixin DataSyncMixin on POSControllerState {
   void savePreparationAreas() => storage.write('preparation_areas', preparationAreas.map((v) => v.toJson()).toList());
   void savePrinters() => storage.write('printers', printers.map((v) => v.toJson()).toList());
 
-  Future<void> updateCafeInfo({String? name, String? address, String? phone}) async {
+  Future<void> updateCafeInfo({
+    String? name, 
+    String? address, 
+    String? phone, 
+    String? instagramLink,
+    String? telegramLink,
+    Map<String, dynamic>? extraData
+  }) async {
     try {
       Map<String, dynamic> data = {};
       if (name != null) data['name'] = name;
       if (address != null) data['address'] = address;
       if (phone != null) data['phone'] = phone;
+      if (instagramLink != null) data['instagram_link'] = instagramLink;
+      if (telegramLink != null) data['telegram_link'] = telegramLink;
+      if (extraData != null) data.addAll(extraData);
       
       await api.updateCafe(cafeId, data);
       await fetchBackendData();
