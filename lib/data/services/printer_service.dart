@@ -61,7 +61,12 @@ class PrinterService {
         if (layout.isEmpty) {
           // Fallback for empty layout
           bytes += generator.text(_normalizeString(posController.restaurantName.value), styles: const PosStyles(align: PosAlign.center, bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
+          if (isKitchenOnly && title != null) {
+            bytes += generator.text(_normalizeString('preparation_area'.tr.toUpperCase() + ":"), styles: const PosStyles(align: PosAlign.center, bold: false));
+            bytes += generator.text(_normalizeString(title.toUpperCase()), styles: const PosStyles(align: PosAlign.center, bold: true, height: PosTextSize.size2, width: PosTextSize.size2));
+          }
           bytes += _hr(generator, ch: '-', is80mm: is80mm);
+
           final String displayId = order['id'].toString().substring(0, order['id'].toString().length > 8 ? 8 : order['id'].toString().length);
           bytes += generator.text(_normalizeString('ID: $displayId'), styles: const PosStyles(align: PosAlign.center));
           bytes += generator.text(_normalizeString(DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())), styles: const PosStyles(align: PosAlign.center));

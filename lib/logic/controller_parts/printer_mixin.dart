@@ -193,9 +193,9 @@ mixin PrinterMixin on POSControllerState {
             // 3. Print tickets (One per area)
             final Set<String> allActiveAreasOnThisPrinter = {...addedByArea.keys, ...cancelledByArea.keys};
             for (final areaId in allActiveAreasOnThisPrinter) {
-              String areaName = "Oshxona";
+              String areaName = "oshxona".tr;
               final areaProduct = products.firstWhereOrNull((p) => p.preparationAreaId?.toString() == areaId);
-              if (areaProduct != null) areaName = areaProduct.preparationArea;
+              if (areaProduct != null) areaName = areaProduct.preparationArea.tr;
 
               final added = addedByArea[areaId] ?? [];
               if (added.isNotEmpty) {

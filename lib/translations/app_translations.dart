@@ -170,7 +170,10 @@ class AppTranslations extends Translations {
           'pick_image_error': 'Could not pick image',
           'preparation_area': 'Preparation Area',
           'Kitchen': 'Kitchen',
+          'kitchen': 'Kitchen',
           'Bar': 'Bar',
+          'bar': 'Bar',
+
           'notifications': 'Notifications',
           'language': 'Language',
           'system_info': 'System Info',
@@ -393,7 +396,10 @@ class AppTranslations extends Translations {
           'pick_image_error': 'Rasmni tanlab bo\'lmadi',
           'preparation_area': 'Tayyorlash joyi',
           'Kitchen': 'Oshxona',
+          'kitchen': 'Oshxona',
           'Bar': 'Bar',
+          'bar': 'Bar',
+
           'notifications': 'Bildirishnomalar',
           'language': 'Til',
           'system_info': 'Tizim haqida',
