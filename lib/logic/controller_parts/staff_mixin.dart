@@ -59,6 +59,7 @@ mixin StaffMixin on POSControllerState {
                 title: Text(w['name'] ?? "Unknown"),
                 onTap: () {
                   selectedWaiter.value = w['name'];
+                  selectedWaiterId.value = w['id']?.toString();
                   didSelect = true;
                   Get.back();
                   onSelected();
@@ -71,6 +72,7 @@ mixin StaffMixin on POSControllerState {
           TextButton(
             onPressed: () {
               selectedWaiter.value = null;
+              selectedWaiterId.value = null;
               didSelect = true;
               Get.back();
               onSelected();

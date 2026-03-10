@@ -416,14 +416,36 @@ mixin DataSyncMixin on POSControllerState {
 
       final details = groupedDetails.values.toList();
 
+      // ─── Professional ID-based table resolution ───────────────────────────
+      String tableKey = "-";
+      final String? tableUuid = o['table_id']?.toString();
+      if (tableUuid != null && tableUuid.isNotEmpty) {
+        final matchingEntry = tableBackendIds.entries.firstWhereOrNull(
+          (e) => e.value == tableUuid,
+        );
+        tableKey = matchingEntry?.key ?? tableKey;
+      } else if (tableNum != null) {
+        final String rawNum = tableNum.toString();
+        if (tableBackendIds.containsKey(rawNum)) {
+          tableKey = rawNum;
+        } else {
+          final matchingEntry = tableBackendIds.entries.firstWhereOrNull((e) {
+            final parts = e.key.split("-");
+            return parts.length >= 2 && parts.sublist(1).join("-") == rawNum;
+          });
+          tableKey = matchingEntry?.key ?? rawNum;
+        }
+      }
+
       return {
         "id": o['id']?.toString(),
-        "table": tableNum != null ? tableNum.toString() : "-",
+        "table": tableKey,
         "table_area": tableArea,
         "mode": typeStr.toString().toLowerCase().replaceAll("_", "-").capitalizeFirst,
         "items": details.fold(0, (sum, item) => sum + (item['qty'] as int)),
         "total": double.tryParse(totalAmt.toString()) ?? 0.0,
         "status": statusStr.toString().replaceAll("_", " ").split(" ").map((s) => s.toLowerCase().capitalizeFirst).join(" "),
+        "waiter_id": o['waiter_id']?.toString(),
         "waiter_name": o['waiter_name'],
         "timestamp": timestamp,
         "details": details,

@@ -132,6 +132,7 @@ abstract class POSControllerState extends GetxController {
   var tableAreaBackendIds = <String, String>{}; // "Zal": "area_uuid"
   var tableAreaDetails = <String, Map<String, dynamic>>{}.obs; // "Zal": {"width_m": 12.0, "height_m": 8.0}
   var selectedWaiter = RxnString(); // Track selected waiter for order assignment (Cashier/Admin)
+  var selectedWaiterId = RxnString(); // Track selected waiter UUID for backend saving
 
   var tablePositions = <String, Map<String, double>>{}.obs; // "Location-TableId": {"x": 100.0, "y": 200.0}
   var tableProperties = <String, Map<String, dynamic>>{}.obs; // width, height, shape

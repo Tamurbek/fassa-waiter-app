@@ -396,9 +396,11 @@ class POSController extends POSControllerState with
       final String orderId = uuid.v4();
       final orderData = {
         "id": orderId,
+        "table_id": currentMode.value == "Dine-in" ? tableBackendIds[selectedTable.value] : null,
         "table_number": currentMode.value == "Dine-in" ? selectedTable.value : null,
         "type": currentMode.value.toUpperCase().replaceAll("-", "_"),
         "is_paid": isPaid,
+        "waiter_id": selectedWaiterId.value ?? currentUser.value?['id']?.toString(),
         "waiter_name": selectedWaiter.value ?? currentUser.value?['name'],
         "cafe_id": cafeId,
         "createdAt": DateTime.now().toIso8601String(),
