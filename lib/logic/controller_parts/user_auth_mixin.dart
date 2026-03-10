@@ -238,6 +238,11 @@ mixin UserAuthMixin on POSControllerState {
     isPinAuthenticated.value = false;
     currentOrder.clear();
 
+    if (forced && wasTerminal) {
+      lockTerminal();
+      return;
+    }
+
     if (deviceRole.value == null) {
       Get.offAllNamed('/welcome');
     } else if (forced) {
