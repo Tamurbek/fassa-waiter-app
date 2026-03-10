@@ -18,6 +18,7 @@ import 'controller_parts/table_mixin.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:vibration/vibration.dart';
 import '../theme/app_theme.dart';
+import '../presentation/pages/main_navigation_screen.dart';
 
 class POSController extends POSControllerState with 
     UserAuthMixin, 
@@ -725,7 +726,7 @@ class POSController extends POSControllerState with
       );
 
       clearCurrentOrder();
-      Get.offAll(() => const MainNavigationScreen());
+      Get.offAll(() => MainNavigationScreen());
     } catch (e) {
       Get.snackbar("Xato", "Hisob so'rashda xatolik yuz berdi: $e", 
           backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
