@@ -420,20 +420,28 @@ mixin DataSyncMixin on POSControllerState {
       String tableKey = "-";
       final String? tableUuid = o['table_id']?.toString();
       if (tableUuid != null && tableUuid.isNotEmpty) {
-        final matchingEntry = tableBackendIds.entries.firstWhereOrNull(
-          (e) => e.value == tableUuid,
-        );
-        tableKey = matchingEntry?.key ?? tableKey;
+        String? foundKey;
+        for (var e in tableBackendIds.entries) {
+          if (e.value == tableUuid) {
+            foundKey = e.key;
+            break;
+          }
+        }
+        tableKey = foundKey ?? tableKey;
       } else if (tableNum != null) {
         final String rawNum = tableNum.toString();
         if (tableBackendIds.containsKey(rawNum)) {
           tableKey = rawNum;
         } else {
-          final matchingEntry = tableBackendIds.entries.firstWhereOrNull((e) {
+          String? foundKey;
+          for (var e in tableBackendIds.entries) {
             final parts = e.key.split("-");
-            return parts.length >= 2 && parts.sublist(1).join("-") == rawNum;
-          });
-          tableKey = matchingEntry?.key ?? rawNum;
+            if (parts.length >= 2 && parts.sublist(1).join("-") == rawNum) {
+              foundKey = e.key;
+              break;
+            }
+          }
+          tableKey = foundKey ?? rawNum;
         }
       }
 
