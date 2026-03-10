@@ -60,7 +60,7 @@ mixin DataSyncMixin on POSControllerState {
 
   void _handleConnectionOverlay() {
     if (!isOnline.value && !isOfflineSyncEnabled.value) {
-      if (!Get.isDialogOpen!) {
+      if (!(Get.isDialogOpen ?? false)) {
         Get.dialog(
           WillPopScope(
             onWillPop: () async => false,
@@ -106,7 +106,7 @@ mixin DataSyncMixin on POSControllerState {
         );
       }
     } else {
-      if (Get.isDialogOpen!) {
+      if (Get.isDialogOpen ?? false) {
         // Only close if it's the connection dialog we opened.
         // Actually, to be safe, we close if it's open and we are online.
         Get.back(); 

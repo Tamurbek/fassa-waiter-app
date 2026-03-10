@@ -89,7 +89,10 @@ class FassaApp extends StatelessWidget {
       translations: AppTranslations(),
       locale: initialLocale,
       fallbackLocale: const Locale('en', 'US'),
-      builder: (context, child) => LocationChecker(child: child!),
+      builder: (context, child) {
+        if (child == null) return const SizedBox.shrink();
+        return LocationChecker(child: child);
+      },
       home: _getInitialScreen(),
       getPages: [
         GetPage(name: '/login', page: () => const LoginPage()),
