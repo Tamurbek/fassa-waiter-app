@@ -238,6 +238,8 @@ class AppTranslations extends Translations {
           'reprint_kitchen': 'Reprint Kitchen',
           'receipt_table_areas': 'Receipt Table Areas',
           'receipt_area_selection_tip': 'Select table areas for bills and final receipts',
+          'order_locked_title': 'Order Locked',
+          'order_locked_msg': 'Bill has been printed. Order is now locked for editing.',
         },
         'uz_UZ': {
           'order_management': 'Buyurtmalar boshqaruvi',
@@ -473,6 +475,8 @@ class AppTranslations extends Translations {
           'reprint_order': 'Qayta chop etish',
           'reprint_kitchen': 'Oshxonaga qayta yuborish',
           'receipt_area_selection_tip': 'Hisob va to\'lov cheklari chiqadigan hududlarni tanlang',
+          'order_locked_title': 'Buyurtma qulflandi',
+          'order_locked_msg': 'Hisob cheki chiqarildi. Buyurtma tahrirlash uchun yopildi.',
         },
         'ru_RU': {
           'order_management': 'Управление заказами',
@@ -696,6 +700,8 @@ class AppTranslations extends Translations {
           'reprint_kitchen': 'Повтор на кухню',
           'receipt_table_areas': 'Зоны для чеков',
           'receipt_area_selection_tip': 'Выберите зоны столов для гостевых счетов и финальных чеков',
+          'order_locked_title': 'Заказ заблокирован',
+          'order_locked_msg': 'Счет распечатан. Заказ закрыт для редактирования.',
         }
       };
 }

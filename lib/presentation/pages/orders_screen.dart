@@ -606,6 +606,16 @@ class OrdersScreen extends StatelessWidget {
               pos.updateOrderStatus(order['id'], "Bill Printed");
               // Update local state to reflect status change immediately
               selectedOrder.value = {...order, 'status': 'Bill Printed'};
+
+              Get.snackbar(
+                "order_locked_title".tr,
+                "order_locked_msg".tr,
+                backgroundColor: Colors.orange,
+                colorText: Colors.white,
+                icon: const Icon(Icons.lock_outline, color: Colors.white),
+                snackPosition: SnackPosition.BOTTOM,
+                duration: const Duration(seconds: 5),
+              );
             } : null,
             icon: Icons.print_rounded,
             color: Colors.orange,
