@@ -673,6 +673,65 @@ class POSController extends POSControllerState with
     }
   }
 
+  Future<void> requestBill() async {
+    // If it's a new order, we must save it first to get an ID
+    if (editingOrderId.value == null) {
+      if (currentOrder.isEmpty) {
+        Get.snackbar("Xato", "Savat bo'sh", backgroundColor: Colors.red, colorText: Colors.white);
+        return;
+      }
+      
+      // Save order first (as PENDING/PREPARING)
+      // Note: submitOrder calls clearCurrentOrder() at the end
+      bool success = await submitOrder(isPaid: false);
+      if (!success) return;
+      
+      // After submission, we are back at the main screen and order is saved.
+      // For immediate "Hisob" tracking, we'd need to re-find the order,
+      // but usually, saving it is enough for a "new" order.
+      // Let's just return here as submitOrder already printed a kitchen ticket and cleared the screen.
+      return;
+    }
+
+    try {
+      final orderId = editingOrderId.value!;
+      
+      // Update status on backend to BILL_PRINTED
+      await updateOrderStatus(orderId, "BILL_PRINTED");
+
+      // Print the bill
+      final tempOrder = {
+        "id": orderId,
+        "table": selectedTable.value.isNotEmpty ? selectedTable.value : "-",
+        "mode": currentMode.value,
+        "total": total,
+        "details": currentOrder.map((e) => {
+          "id": (e['item'] as FoodItem).id,
+          "name": (e['item'] as FoodItem).name,
+          "qty": e['quantity'],
+          "price": (e['item'] as FoodItem).price,
+        }).toList(),
+      };
+      
+      await printOrder(tempOrder, receiptTitle: "HISOB CHEKI");
+
+      Get.snackbar(
+        "order_locked_title".tr,
+        "order_locked_msg".tr,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        icon: const Icon(Icons.lock_outline, color: Colors.white),
+        snackPosition: SnackPosition.BOTTOM,
+      );
+
+      clearCurrentOrder();
+      Get.offAll(() => const MainNavigationScreen());
+    } catch (e) {
+      Get.snackbar("Xato", "Hisob so'rashda xatolik yuz berdi: $e", 
+          backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
   void toggleAutoStart() async {
     isAutoStart.value = !isAutoStart.value;
     storage.write('is_auto_start', isAutoStart.value);

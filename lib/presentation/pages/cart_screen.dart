@@ -432,31 +432,7 @@ class CartScreen extends StatelessWidget {
                     label: "Hisob",
                     icon: Icons.receipt_long_rounded,
                     color: Colors.blueGrey.shade700,
-                    onTap: () {
-                      final tempOrder = {
-                        "id": pos.editingOrderId.value ?? "NEW",
-                        "table": pos.selectedTable.value.isNotEmpty ? pos.selectedTable.value : "-",
-                        "mode": pos.currentMode.value,
-                        "total": pos.total,
-                        "details": pos.currentOrder.map((e) => {
-                          "id": (e['item'] as FoodItem).id,
-                          "name": (e['item'] as FoodItem).name,
-                          "qty": e['quantity'],
-                          "price": (e['item'] as FoodItem).price,
-                        }).toList(),
-                      };
-                      pos.printOrder(tempOrder, receiptTitle: "HISOB CHEKI");
-
-                      Get.snackbar(
-                        "order_locked_title".tr,
-                        "order_locked_msg".tr,
-                        backgroundColor: Colors.orange,
-                        colorText: Colors.white,
-                        icon: const Icon(Icons.lock_outline, color: Colors.white),
-                        snackPosition: SnackPosition.BOTTOM,
-                        duration: const Duration(seconds: 5),
-                      );
-                    },
+                    onTap: () => pos.requestBill(),
                   ),
                 ),
                 if (pos.isAdmin || pos.isCashier) ...[
