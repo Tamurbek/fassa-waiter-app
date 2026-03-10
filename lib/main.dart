@@ -22,26 +22,36 @@ void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
+  // Initialize essential components with error handling
   try {
-    await GetStorage.init();
+    // 1. Storage with timeout to prevent hanging
+    await GetStorage.init().timeout(const Duration(seconds: 3), onTimeout: () {
+      print("Storage initialization timed out, continuing anyway...");
+    });
+    
+    // 2. Localization
+    unawaited(initializeDateFormatting('uz_UZ', null));
+    unawaited(initializeDateFormatting('en_US', null));
+    unawaited(initializeDateFormatting('ru_RU', null));
+    
+    // 3. Background Service
+    initializeService().catchError((e) {
+      print("Background service error: $e");
+    });
+    
+    // 4. Controller
+    Get.put(POSController());
+    
   } catch (e) {
-    print("Storage initialization error: $e");
+    print("Startup error: $e");
   }
-  
-  // Initialize locale data in background
-  unawaited(initializeDateFormatting('uz_UZ', null));
-  unawaited(initializeDateFormatting('en_US', null));
-  unawaited(initializeDateFormatting('ru_RU', null));
-  
-  // Initialize Background Service without blocking UI startup
-  initializeService().catchError((e) {
-    print("Background service error: $e");
-  });
-  
-  // Initialize Controller
-  Get.put(POSController());
-  
+
   runApp(const FassaApp());
+  
+  // Ensure splash screen is removed even if build takes time
+  Future.delayed(const Duration(milliseconds: 500), () {
+    FlutterNativeSplash.remove();
+  });
 }
 
 class FassaApp extends StatelessWidget {
@@ -50,11 +60,12 @@ class FassaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pos = Get.find<POSController>();
-    // Get stored locale or default to uz_UZ
     final storage = GetStorage();
+    
     pos.restaurantName.value = storage.read('restaurant_name') ?? "Fassa";
     String? storedLang = storage.read('lang');
     Locale initialLocale = const Locale('uz', 'UZ');
+    
     if (storedLang != null) {
       try {
         final parts = storedLang.split('_');
@@ -67,9 +78,6 @@ class FassaApp extends StatelessWidget {
         print("Locale parse error: $e");
       }
     }
-
-    // Remove splash screen after first frame
-    FlutterNativeSplash.remove();
 
     return GetMaterialApp(
       title: 'Fassa Waiter',
