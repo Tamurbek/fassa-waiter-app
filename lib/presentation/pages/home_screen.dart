@@ -440,14 +440,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: const Text("Yangi", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                                 ),
                               ),
-                            // Low Stock Badge
-                            if (pos.isStockTrackingEnabled.value && item.isLowStock)
+                            // Stock Badge
+                            if (pos.isStockTrackingEnabled.value && item.stockRemaining != null && item.stockRemaining! > 0)
                               Positioned(
                                 bottom: 8, right: 8,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(8)),
-                                  child: Text("${item.stockRemaining} qoldi", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  decoration: BoxDecoration(
+                                    color: item.isLowStock ? Colors.orange : const Color(0xFF6366F1).withOpacity(0.9),
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)],
+                                  ),
+                                  child: Text("${item.stockRemaining} dona", 
+                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
                                 ),
                               ),
                             // Sold Out Overlay
@@ -611,9 +616,26 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(variant.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                Text(
-                                  "${NumberFormat('#,###', 'uz_UZ').format(variant.price)} ${pos.currencySymbol}",
-                                  style: const TextStyle(color: Color(0xFFFF9500), fontWeight: FontWeight.w900, fontSize: 14),
+                                Row(
+                                  children: [
+                                    Text(
+                                      "${NumberFormat('#,###', 'uz_UZ').format(variant.price)} ${pos.currencySymbol}",
+                                      style: const TextStyle(color: Color(0xFFFF9500), fontWeight: FontWeight.w900, fontSize: 14),
+                                    ),
+                                    if (pos.isStockTrackingEnabled.value && variant.stockRemaining != null) ...[
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        variant.stockRemaining! > 0 
+                                          ? "(${variant.stockRemaining} dona)" 
+                                          : "(Tugagan)",
+                                        style: TextStyle(
+                                          color: variant.stockRemaining! > 0 ? const Color(0xFF10B981) : Colors.red,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ],
                             ),

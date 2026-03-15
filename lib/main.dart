@@ -116,6 +116,14 @@ class FassaApp extends StatelessWidget {
     
     // 1. Check if Waiter is logged in
     if (pos.currentUser.value == null) {
+      // If terminal is already attached, go to staff selection
+      if (pos.currentTerminal.value != null) {
+         final String? tCafeId = pos.currentTerminal.value?['cafe_id']?.toString();
+         if (tCafeId != null) {
+           return StaffSelectionPage(cafeId: tCafeId, isFromTerminal: true);
+         }
+      }
+
       if (pos.waiterCafeId.value != null) {
         return StaffSelectionPage(cafeId: pos.waiterCafeId.value, isFromTerminal: false);
       } else {

@@ -229,10 +229,8 @@ mixin UserAuthMixin on POSControllerState {
     pinCode.value = null;
     storage.remove('pin_code');
     
-    bool wasTerminal = currentTerminal.value != null;
-    
-    // Always clear terminal if forced or if it was a terminal session
-    if (forced || wasTerminal) {
+    // Only clear terminal if forced (e.g. by admin)
+    if (forced) {
        currentTerminal.value = null;
        storage.remove('terminal');
        storage.remove('terminal_token');
@@ -249,7 +247,12 @@ mixin UserAuthMixin on POSControllerState {
     
     isPinAuthenticated.value = false;
     currentOrder.clear();
-    Get.offAllNamed('/welcome');
+    
+    if (currentTerminal.value != null) {
+      Get.offAll(() => StaffSelectionPage(cafeId: cafeId, isFromTerminal: true));
+    } else {
+      Get.offAllNamed('/welcome');
+    }
   }
 
   void lockTerminal() {

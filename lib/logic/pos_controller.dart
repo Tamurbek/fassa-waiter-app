@@ -124,6 +124,9 @@ class POSController extends POSControllerState with
     }
 
     if (currentUser.value != null || currentTerminal.value != null) {
+      if (currentUser.value == null && currentTerminal.value != null) {
+        api.restoreTerminalToken();
+      }
       socket.setCafeId(cafeId);
     }
 
