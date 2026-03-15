@@ -230,31 +230,26 @@ mixin UserAuthMixin on POSControllerState {
     storage.remove('pin_code');
     
     bool wasTerminal = currentTerminal.value != null;
-    if (wasTerminal) {
-      api.restoreTerminalToken();
+    
+    // Always clear terminal if forced or if it was a terminal session
+    if (forced || wasTerminal) {
+       currentTerminal.value = null;
+       storage.remove('terminal');
+       storage.remove('terminal_token');
+       deviceRole.value = null;
+       storage.remove('device_role');
+       api.setToken(null);
+       
+       // For Waiter mobile app specifically, also clear cafe linking
+       waiterCafeId.value = null;
+       storage.remove('waiter_cafe_id');
     } else {
-      api.setToken(null);
+       api.setToken(null);
     }
+    
     isPinAuthenticated.value = false;
     currentOrder.clear();
-
-    if (forced && wasTerminal) {
-      lockTerminal();
-      return;
-    }
-
-    if (deviceRole.value == null) {
-      Get.offAllNamed('/welcome');
-    } else if (forced) {
-       Get.offAllNamed('/welcome');
-    } else {
-      // For Waiter app, full logout means unlinking from cafe
-      waiterCafeId.value = null;
-      storage.remove('waiter_cafe_id');
-      deviceRole.value = null;
-      storage.remove('device_role');
-      Get.offAllNamed('/welcome');
-    }
+    Get.offAllNamed('/welcome');
   }
 
   void lockTerminal() {

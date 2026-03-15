@@ -106,6 +106,14 @@ class SocketService {
     socket.on('forceLogoutUser', (data) => callback(data));
   }
 
+  void onForceLogoutTerminal(Function(dynamic) callback) {
+    socket.on('forceLogoutTerminal', (data) => callback(data));
+  }
+
+  void onForceLogoutSession(Function(dynamic) callback) {
+    socket.on('forceLogoutSession', (data) => callback(data));
+  }
+
   void onForceLogout(Function(dynamic) callback) {
     socket.on('forceLogout', (data) => callback(data));
   }
